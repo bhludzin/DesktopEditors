@@ -14,6 +14,7 @@ import collections
 import csv
 import datetime
 import filecmp
+import hashlib
 import json
 import os
 import shutil
@@ -286,8 +287,14 @@ def cmd_loop(args):
     if not npm:
         die('npm not found; install Node.js')
     build = SDKJS / 'build'
-    if not (build / 'node_modules').exists():
+    # Reinstall when the lockfile changes, e.g. after checking out another sdkjs
+    # commit whose build uses different tools.
+    lock = build / 'npm-shrinkwrap.json'
+    lock_hash = hashlib.sha256(lock.read_bytes()).hexdigest() if lock.exists() else ''
+    stamp = build / 'node_modules' / '.fidelity-lockfile-sha256'
+    if not stamp.exists() or stamp.read_text().strip() != lock_hash:
         run([npm, 'ci', '--no-audit', '--no-fund'], cwd=build)
+        stamp.write_text(lock_hash + '\n')
     # The settings the desktop app's release uses: with these, an unmodified
     # sdkjs builds byte-for-byte identical to the released bundles. (Development
     # builds do not load in x2t: both bundles declare webpack's runtime.)

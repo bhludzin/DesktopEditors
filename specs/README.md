@@ -46,12 +46,14 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
 
 ## Where things stand (2026-11-21)
 
-- Fixed: F-001 kerning, F-002 script itemization, F-003 line width, and I-001 fractional font
-  sizes (sdkjs 414ae64bd0). Text lines breaking like PowerPoint rose from
-  87.1% (release 9.3.8) to 96.7%, slides with identical line breaks from 443 to 673 of 835,
-  and mean SSIM from 0.890 to 0.957.
-- Biggest open issues:
-  - **K2** glyph advances: long lines drift and borderline words wrap differently.
-  - **K1** triangle arrowheads too big.
-  - **K3** the 0.25 pt width reduction. It is coupled to K2: change and measure them together.
-  - **I-007** default outline width of 1 pt instead of 0.75 pt.
+- Fixed: F-001 kerning, F-002 script itemization and F-003 line width (sdkjs 7898a3e982),
+  I-001 fractional font sizes (414ae64bd0), I-007 default outline width 0.75 pt (7e6a447d83),
+  I-012 picture outlines outside the picture (555e9eabe3), K1 filled triangle arrowheads
+  (44cdab9e9f), and K2 + K3 (e84bfe4efb): PowerPoint lays text out in whole 1/576-inch units
+  (each glyph advance rounded, kerning added exactly, the text width rounded down), which
+  replaces F-003's fitted 0.25 pt reduction. Text lines breaking like PowerPoint rose from
+  87.1% (release 9.3.8) to 99.6%, slides with identical line breaks from 443 to 774 of 835,
+  and mean SSIM from 0.890 to 0.983 (run k2-k3-layout576).
+- Open: the major issues left are I-002 to I-006 (text, 1-6 slides each). Regular 12.75 pt
+  text still runs about 0.1% long (slide 255). Slides 35, 93, 116, 510 and 525 still break
+  some lines differently.

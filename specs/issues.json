@@ -169,9 +169,14 @@
    "group": "arrows",
    "tag": "K1",
    "id": "K1",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 44cdab9e9f (fix(slide): draw triangle arrowheads like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-21",
+     "note": "Fixed in word/Drawing/ShapeDrawer.js (+ Geometry.js draw/drawSmart), presentation editor only: 1) DrawLineEnd's Triangle case only fills the head (no second stroke of the polygon with the line pen). 2) The shaft is shortened under each triangle head: CShapeDrawer.getPathsToDraw trims the first/last open subpath (lines and cubic beziers, cut where the path crosses a circle around the end point) so the stroke ends (len - s/2) before the tip, s = max(line width, 2 pt), i.e. s/2 past the head's base, which is where PowerPoint's PDF ends it; drawArrows still uses the untrimmed end point and direction. Filled paths keep their full outline for the fill. 3) PDF-mode floor raised from 1.875 pt to 2 pt (minArrowSize = 2 x 25.4 / 72 mm). Checked in the PDFs against PowerPoint's: page 578 (4.5 pt med/med) shaft end 662.229, head base 659.979, tip 673.479, half-width 6.75 pt, all equal to PowerPoint's; page 120 lg/lg head 15 x 15 pt; pages 29 and 32 (0.75 pt) heads 6.0 x 6.0 pt; the curved shaft on page 593 matches. Harness run k1-filled-heads vs i012-pic-outline-outside: lines 96.7% -> 96.7%, identical slides 673 -> 673, SSIM 0.9575 -> 0.9576; 115 slides better and 0 worse on SSIM. Of the 116 slides with findings, 115 are better, 1 unchanged at 4 decimals (32, a single 0.75 pt head), 0 worse. Not changed: the other closed line ends (Stealth, Oval, Diamond, Square, ReverseTriangle; none in this deck) and the screen-mode floor."
+    }
+   ]
   },
   {
    "key": "K2",
@@ -342,9 +347,14 @@
     "The 1/576-inch per-advance rounding model fits the K2 line ends (RMS 0.70 px) and the regular 13.5 pt space, but not all of wrap-k3/1's per-glyph PowerPoint PDF data. At 13.5 pt the bold space measures 2.78 pt (model 3.00), the bold letters measure +0.03..+0.04 pt (model about -0.01), and regular 'o' measures 7.187 (model 7.125). Treat the rule as a hypothesis: validate it against both data sets before coding it, especially bold. Note also that PowerPoint's PDF sets 13.5 pt text at Tf 13.56 or 13.584, varying per line (page 125), so any analysis that uses PDF font sizes instead of glyph positions will be biased."
    ],
    "id": "K2",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs e84bfe4efb (fix(slide): lay slide text out in 1/576-inch units like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-21",
+     "note": "Hypothesis checked on PowerPoint's PDF (all 838 pages) before coding; scripts and outputs in review/grouping/work-glyphs-fonts/k2-layout-check (k2starts.py: word starts, k2words.py: within words). PowerPoint uses two grids. (1) Layout: the start positions of words along a line (so line widths and line breaks) follow the 1/576-inch model with S pt = 8 x S units per em (13.5 pt -> 108): each glyph's own advance rounded to a whole unit (halves up), spaces included, and pair kerning added UNROUNDED. Word-start residual (PowerPoint minus model), mean and slope: regular 13.5 pt -0.015 pt, -0.006 pt per 100 pt (100588 word starts); bold 13.5 -0.011, -0.007 (5233); regular 18 -0.11, -0.03; bold 30 -0.01, -0.006; regular 10.5 (kerning off at < 12 pt) -0.015, -0.006. Exact design widths: +0.10, +0.047 (13.5); +0.64, +0.21 (18); -0.41, -0.32 (bold 13.5). The issue's variant with the kerning truncated toward zero is rejected: -0.24, -0.10 at 13.5 and -0.44, -0.14 at 18 (rounded kerning comes close to exact). (2) Drawing: the PDF's font size is the run size rounded to 1/600 inch (13.56, 12.72, 39.96, 44.04) and the glyphs inside a word sit at 600-dpi rounded advances (76% of 13.5 pt words within 0.03 pt of that model, 23-26% for linear or 1/576 widths); the spaces absorb the difference, so word starts follow the layout grid. This is why per-glyph and within-word measurements pointed at 600 dpi and line ends at 576. Two measurement traps on the way: PowerPoint's TJ adjustments are sparse, so single-glyph advances are biased, and a parser bug (Tc kept across Q) made the 10.5 pt list text on 627-648 look 0.5 px per glyph wide. Regular 12.75 pt fits less well (-0.17 pt, -0.06 per 100 pt), bold 12.75 fits (-0.03, -0.02). Fixed in word/Editor/Paragraph/TextShaper.js, presentation editor, baseline text: the unkerned advance of each single-glyph grapheme (measured before shaping and cached per font and glyph, because the font engine cannot be called while the shaped glyphs are read) is rounded to 1/8 pt at the run size and the shaper's kerning is added back; spaces are rounded the same way. word/Editor/Paragraph/RunContent/Space.js now keeps fractional sizes for spaces as CRunText does (a 12.75 pt space was measured at 13 pt). Measured together with K3. Harness run k2-k3-layout576 vs k1-filled-heads: lines 96.7% -> 99.6% (14903 -> 15346 of 15410), identical slides 673 -> 774, SSIM 0.9576 -> 0.9834; line breaks 109 slides better and 0 worse; SSIM 828 better and 4 worse: 255 (-0.0068; regular 12.75 pt lines now end about 0.45 pt late where linear widths ended about 0.2 pt early on average, breaks unchanged; the other 12.75 pt slides 85, 478, 684, 685, 692, 693, 700 improved), 496, 203, 308 (0.0005 or less). All 116 K2 slides better, 110 now break exactly like PowerPoint (26 before); still different: 35, 93, 116, 510, 525, and 163 with every line matched. K2 alone with K3's 0.25 pt reduction kept (run k2-adv-576): 97.8%, 706 identical, SSIM 0.9789, but 54 slides worse on line breaks than k1-filled-heads, so the two only work together."
+    }
+   ]
   },
   {
    "key": "K3",
@@ -404,9 +414,14 @@
     "Cause looks right but is coupled to K2: the 0.25 pt reduction is the compensation for K2's drift, so removing it alone regresses about 1.5% of lines (per commit 7898a3e), and fixing K2 alone does not change these 13 lines. K3 and K2 should land in the same change set and be re-measured together."
    ],
    "id": "K3",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs e84bfe4efb (fix(slide): lay slide text out in 1/576-inch units like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-21",
+     "note": "Fixed together with K2 in common/Drawings/Format/Shape.js: PRESENTATION_LINE_WIDTH_REDUCTION (0.25 pt) is removed and slide text is laid out on the box width minus insets rounded down to whole 1/576-inch units (PRESENTATION_LAYOUT_UNIT), the unit PowerPoint lays text out in. Measured in steps from k1-filled-heads (96.7% lines, 673 identical): K2 with the 0.25 pt reduction (k2-adv-576) 97.8% / 706, 54 slides worse on breaks (e.g. 316, 831 lose their last word); K2 with no reduction (k2-576-red0) 98.9% / 750, 8 slides worse, and 25 worse than with 0.25 pt (297, 338, 714, 322, 766, ... keep a word PowerPoint wraps: this issue's counter-examples); K2 with the width rounded down to whole units (k2-576-floor576, same as the final k2-k3-layout576) 99.6% / 774, those 25 all fixed, 0 slides worse on breaks than k1-filled-heads. All 14 K3 slides better; 9 break exactly like PowerPoint, and 11, 13, 14, 176 and 440 have every PowerPoint line matched but are not counted identical."
+    }
+   ]
   },
   {
    "key": "K4",
@@ -1033,9 +1048,14 @@
    ],
    "group": "outlines",
    "id": "I-007",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 7e6a447d83 (fix(slide): stroke outlines without a width at 0.75 pt)",
+   "log": [
+    {
+     "date": "2026-11-21",
+     "note": "Fixed: CShape.prototype.recalculatePen (also used by pictures) sets pen.w = 9525 when the compiled pen has no width, in the presentation editor only, so drawing, bounds, shadows, hit testing and the UI all use 0.75 pt. The 12700 fallbacks elsewhere are left alone (Word and spreadsheet shapes keep them). Euro-Office's PDF now writes '0.74999 w' where PowerPoint writes '0.75 w' (pages 86, 114, 213, 622, 633, 702). Harness run i007-ln-default-075 vs i001-fontsize-hundredths: lines 96.7% -> 96.7%, identical slides 673 -> 673, SSIM 0.9569 -> 0.9574; 105 slides better and 6 worse on SSIM (10 better and 0 worse by more than 0.01). Of the 136 slides with findings, 82 are better, 50 unchanged and 4 slightly worse. The 6 worse slides: 228 (picture frame, now drawn at the right width but still centred on the picture edge: fixed together with I-012, see there), 633 (-0.0002: six rotated 0.75 pt label frames whose widths now equal PowerPoint's, the stair-steps of the aliased rotated edges fall differently), 626 (-0.0013: one edge column moved, absolute pixel error went down), and 16, 208, 690 (-0.004 to -0.006). On 16, 208 and 690 a frame edge lies exactly on a pixel boundary of the 800-px render (340.000, 265.000, 320.000 px). PowerPoint's PDF writes re operands with 5 significant digits (e.g. '362.98 63.148 349.94 170.85 re'), which moves its edge 0.002 pt (0.002 px) and decides which row the aliased rasterizer lights. The old 1 pt stroke lit both rows. This is the reference-rounding tie of the rejected S0332-1 and S0402-1, not a Euro-Office rendering rule. With I-012 (run i012-pic-outline-outside): SSIM 0.9575; vs i001-fontsize-hundredths 108 slides better and 5 worse (16, 208, 626, 633, 690 as above), 14 better and 0 worse by more than 0.01."
+    }
+   ]
   },
   {
    "key": "outlines/2",
@@ -1247,9 +1267,14 @@
     "Identical mechanism and code. CImageShape.prototype.draw (Image.js 582-649) strokes the picture's own calcGeometry, centred on the edge and twice (spPr pass and blip pass). PowerPoint strokes the rect inflated by w/2 (slide 702 PDF: '125.63 184.13 469.57 221.25 re' around a '126 184.5 468.82 220.5' image; slide 622 is the same with 3 w). Both issues give the same fix: blip with pen = null, then one outline pass on the inflated rect. pictures-misc/2 itself lists S0622-1, S0693-3, S0694-3, S0228-1, S0430-1 and S0431-1 (the outlines/3 findings) as belonging with it."
    ],
    "id": "I-012",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 555e9eabe3 (fix(slide): draw picture outlines outside the picture)",
+   "log": [
+    {
+     "date": "2026-11-21",
+     "note": "Fixed: in the presentation editor, CImageShape.prototype.draw draws a rectangular picture's fill passes without the pen and then strokes the outline once (drawOutlineOutside), on a rect grown by w/2 on every side, so the inner edge of the line lies on the picture edge. Euro-Office's PDF for page 228 now strokes a 421.75 x 284.25 rect after the image (PowerPoint: '141.13 134.63 421.75 284.25 re'); page 622's 3 pt frame and page 702's frame are stroked once. Pictures with other geometries are unchanged. Harness run i012-pic-outline-outside vs i007-ln-default-075 (which already had I-007): SSIM 0.9574 -> 0.9575, 7 slides better and 0 worse. All 7 slides improved vs i001-fontsize-hundredths: 228 0.9327 -> 0.9429, 430 0.9753 -> 0.9822, 431 0.9734 -> 0.9804, 622 0.9237 -> 0.9469, 693 0.8973 -> 0.9162, 694 0.8962 -> 0.9041, 702 0.9772 -> 0.9896. This fix had to go with I-007: with only I-007, slide 228's 0.75 pt frame lost the half that stuck out of the picture and the slide got worse."
+    }
+   ]
   },
   {
    "key": "vertical/6",
@@ -1522,7 +1547,12 @@
    "confidence": "medium",
    "findings": [],
    "representative": [],
-   "log": []
+   "log": [
+    {
+     "date": "2026-11-21",
+     "note": "Superseded by K3 (with K2): the fitted 0.25 pt reduction (PRESENTATION_LINE_WIDTH_REDUCTION) was compensating for the advance drift of K2. With PowerPoint's 1/576-inch advances in place, the text width is now the box width minus insets rounded down to whole 1/576-inch units. Run k2-k3-layout576: 99.6% of lines break like PowerPoint (95.1% when this fix landed)."
+    }
+   ]
   }
  ],
  "rejected": [

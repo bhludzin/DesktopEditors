@@ -59,9 +59,10 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   I-022 (4c3273edbc): superscripts at 2/3 size with the stated raise, no kerning
   into a hyphen, trailing spaces counted when aligning in `wrap="none"` boxes, and a line
   break allowed after an en dash. K4 (88cc4cc6cb): underlines and strikethroughs
-  placed and sized from the font's own metrics, as PowerPoint does. Text lines breaking like
+  placed and sized from the font's own metrics, as PowerPoint does. I-017 (38734b3eb3 and
+  472ee0b1ae): lines under line spacing other than 100% placed as PowerPoint does. Text lines breaking like
   PowerPoint rose from 87.1% (release 9.3.8) to 99.97%, slides with identical line breaks
-  from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run k4-c).
+  from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run i017-c).
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text. Two minor issues were found while fixing I-006:

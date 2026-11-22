@@ -1470,20 +1470,20 @@
     "S0596-1"
    ],
    "description": "Two boxes with an effective 80% line spacing are shifted up as a whole while the line pitch matches. One is the body placeholder on 579 (normAutofit fontScale=47500 lnSpcReduction=20000, 100% lnSpc; 16 lines, top-anchored). The other is the title text box on 594-596 (fontScale=85000 lnSpcReduction=10000 on lstStyle lnSpc 90%; one line, anchor ctr). PDF: slide 579 first baseline 142.39 pt in PowerPoint vs 142.00 in Euro-Office (-0.39 pt), every later line the same; slide 594 title 108.14 vs 107.79 (-0.35 pt). Scaled font sizes agree (15 pt and 28 pt in both PDFs), and at 100% spacing first baselines agree to 0.01 pt (e.g. slide 718).",
-   "powerpoint": "At 15 pt Calibri and 80% spacing, the first baseline is 10.83 pt (0.722 em) below the text-area top, versus 0.936 em at 100%. The reduction above the first baseline is about 0.214 em.",
-   "euro_office": "The first baseline is 10.44 pt (0.696 em) below the top, 0.240 em = 20% x 1.2 em higher than at 100%. Euro-Office removes the full 20% of the 1.2 em line above the first baseline, while PowerPoint removes slightly less. On the 90%-10% title, EO uses 0.9 - 0.1 = 0.8; PowerPoint may combine them differently (0.9 x 0.9 = 0.81).",
-   "suspected_cause": "How a percentage line spacing below 100% is distributed over the first line, and possibly how lnSpc and lnSpcReduction are combined (subtractive in EO). Not confirmed.",
-   "code_area": "Not located precisely. Candidates: word/Editor/Paragraph.js Get_CompiledPr2 area 11233-11239 ('Spacing.Line = Spacing.Line - Pr.ParaPr.LnSpcReduction'), and word/Editor/Paragraph_Recalculate.js CParaLineMetrics.Recalculate_LineGap (2980) / private_RecalculateLinePosition (1339) for the first-line ascent under linerule_Auto < 1.",
+   "powerpoint": "Under percentage spacing other than 100%, and under exact spacing, a line is H high: the percentage of the text height (1.2 x the font size; the tallest text on a mixed line) or the exact value in whole points. A quarter of H lies below the baseline, plus however much the font's single-spacing descent exceeds a quarter of the single line height (Courier New); at single height or less the part below is never more than the font's descent. The rest lies above. 18 pt Calibri (single line 21.6 pt, descent 4.75): at 150% the first baseline is 24.3 pt below the box top (0.75 x 32.4), at 200% 32.4, at 80% 12.96 (a quarter, 4.32, is less than the descent), at 90% 14.69 (a quarter, 4.86, is more, so all 2.16 pt come off above). Exactly 100% keeps the font's own ascent (16.85), so 101% puts the first baseline about 0.5 pt higher than 100% does. Exact 22 pt spacing: 16.5. normAutofit lnSpcReduction is subtracted from the percentage, also from lnSpc set on the paragraph itself (100% - 20% = 80%, 150% - 20% = 130%); exact spacing is not reduced. For ctr and b anchoring (and the text height) the last line ends at its font descent below the baseline; the rest of its line height is not counted. PowerPoint then snaps baselines to a 1/600-inch grid, so single cases differ by up to 0.12 pt.",
+   "euro_office": "Before the fix: Word's rule. Above 100% the text kept its single-spacing ascent and the extra went below each line, so the first baseline stayed at the 100% position (18 pt Calibri: 7.6 pt too high at 150%, 15.6 at 200%). Below 100% the whole reduction came off above the line (0.44 pt too high at 80%, 2.1 at 50%). Exact spacing put the whole difference above the baseline (5.2 pt too low at 40 pt). The last line's extra space counted in the text height, so ctr- and b-anchored 18 pt text at 150% sat 9.3 and 11.0 pt too high. lnSpcReduction applied only to inherited spacing, not to lnSpc set on the paragraph.",
+   "suspected_cause": "Confirmed: Euro-Office placed lines under line spacing by Word's rule (the text keeps its ascent and the whole difference goes below the line above 100%, above it below 100%, and above the baseline under exact spacing), counted the last line's extra space in the text height, and ignored lnSpcReduction when lnSpc was set on the paragraph itself.",
+   "code_area": "word/Editor/Paragraph_Recalculate.js: CParaLineMetrics.ApplySlideLineSpacing, IsSlideLineSpacing and GetAutoLineSpacing, called from Paragraph.private_RecalculateLineMetrics; private_RecalculateLinePosition (the last line's bottom); CParaLineMetrics.Recalculate_LineGap (lnSpcReduction, upstream 0c5d320b17).",
    "fix_idea": "Build a small test deck (Calibri 15/28 pt; lnSpc 100/90/80% with and without lnSpcReduction) and compare PowerPoint's first baseline with EO's. Then change the first-line reduction for slide text to match: e.g. scale only the part of the line above the ascent, and decide between subtractive (lnSpc - reduction) and multiplicative (lnSpc x (1 - reduction)) combination.",
-   "confidence": "low",
+   "confidence": "high",
    "representative": [
     "S0579-1",
     "S0594-2"
    ],
    "group": "vertical",
    "id": "I-017",
-   "status": "open",
-   "fixed_in": null,
+   "status": "fixed",
+   "fixed_in": "sdkjs 38734b3eb3 (fix(slide): place lines under line spacing like PowerPoint) and 472ee0b1ae (lnSpcReduction taken off at layout, as on the fork's main)",
    "log": [
     {
      "date": "2026-11-22",
@@ -1492,6 +1492,10 @@
     {
      "date": "2026-11-22",
      "note": "Another data point, from test deck decoration-rules slide 6 (a wrapped 13.5 pt Calibri paragraph, lnSpc 150%, zero insets): PowerPoint's first baseline is 18.34 pt below the box top, Euro-Office's 12.7 pt (the 100% position), so 5.64 pt or 0.42 em lower; the line pitch (24.24-24.36 pt) matches. With the 18 pt case above (7.6 pt, 0.42 em) this suggests the first line moves down by about 0.42 em at 150%."
+    },
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor. Measured on two test decks of 72 boxes each (linespacing-rules, linespacing-rules2: Calibri 12/13.5/18/24/30/40 pt, Times New Roman, Arial, Georgia, Verdana, Segoe UI, Cambria, Calibri Light, Courier New; lnSpc 50-300% including 95-108%; exact 10-40 pt; lnSpcReduction with lnSpc on the paragraph, in the list style and with fontScale; mixed sizes; two paragraphs with different spacing; spcBef/spcAft; empty paragraphs; wrapped text; anchor t, ctr and b). Before: 10 of 144 boxes had every baseline within 0.05 pt of PowerPoint, and the worst was 31.8 pt off (300%). After: 141 of 144 boxes within 0.15 pt; the worst, 0.16 pt, are ctr/b anchors at 150% (Euro-Office's Calibri descent 4.75 pt against PowerPoint's about 4.6) and Times New Roman at 80-100% (0.13 pt, as at 100% before). Test-deck SSIM 0.9552 -> 0.9970 and 0.9641 -> 0.9961. Harness run i017-c (sdkjs 472ee0b1ae; the same scores as the uncommitted run i017-a) vs k4-c: line breaks unchanged (784 of 835 slides identical, 15406 of 15410 lines). Only slides 579 and 594-596 move, all closer to PowerPoint: the 16 lines on 579 sit 0.36 pt lower (e.g. 174.76 against PowerPoint's 174.79, was 174.40), and the title on 594-596 at 108.13 (PowerPoint 108.14, was 107.79). SSIM better on 594-596 (+0.0036 each), no slide worse; mean 0.9887. lnSpcReduction is taken off where the line gap is calculated, as in upstream commit 0c5d320b17 already on the fork's main, so the paragraph settings and Format Painter keep the stored spacing."
     }
    ]
   },

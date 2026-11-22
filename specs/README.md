@@ -25,8 +25,8 @@ slide images in a private work folder (`../fidelity-work`).
 | [workflows/](workflows/) | The Claude Code workflow scripts that ran the slide review and the root-cause grouping |
 
 Issue ids: **K1–K6** were known before the full review (from a pilot) and kept their ids;
-**I-001…** were found by the review, numbered by severity and reach; **F-001…** were fixed
-before the review.
+**I-001…I-019** were found by the review, numbered by severity and reach; **I-020** onwards
+turned up while fixing them; **F-001…** were fixed before the review.
 
 ## Working through an issue
 
@@ -53,9 +53,13 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   (each glyph advance rounded, kerning added exactly, the text width rounded down), which
   replaces F-003's fitted 0.25 pt reduction, and I-002 + I-003 + I-009 (42d5db5758): spaces
   size their line, paragraph spacing after and before are added, and point spacing is used
-  in whole points. Text lines breaking like PowerPoint rose from 87.1% (release 9.3.8) to
-  99.6%, slides with identical line breaks from 443 to 774 of 835, and mean SSIM from 0.890
-  to 0.986 (run spacing-i002-i003-i009-c).
-- Open: the major issues left are I-004 to I-006 (text, 1-5 slides each). Regular 12.75 pt
-  text still runs about 0.1% long (slide 255). Slides 35, 93, 116, 510 and 525 still break
-  some lines differently.
+  in whole points. I-004 + I-005 + I-006 (d3452db46b): a line may start after any space,
+  kerning applies across spaces, and complex-script runs use the theme's script font for
+  their language, with right-to-left text no longer garbled. Text lines breaking like
+  PowerPoint rose from 87.1% (release 9.3.8) to 99.9%, slides with identical line breaks
+  from 443 to 781 of 835, and mean SSIM from 0.890 to 0.987 (run i004-i005-i006-c).
+- Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
+  (slide 255). Slides 93, 116, 510 and 525 still break some lines differently, and 674
+  differs only in its extracted Hebrew text. Two minor issues were found while fixing I-006:
+  a line that mixes fonts is taller than in PowerPoint (I-020, slide 674), and a composed
+  bet with dagesh loses its dot in the PDF (I-021).

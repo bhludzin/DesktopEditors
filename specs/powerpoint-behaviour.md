@@ -20,6 +20,9 @@ says so. The numbers come from PowerPoint's PDF unless stated otherwise.
 | A space sizes its line like text does. A line holding only spaces takes its height from them (a 13.5 pt space makes a 16.2 pt line, whatever `endParaRPr` says), and a larger space on a text line makes that line taller. Empty paragraphs take their height from `endParaRPr`. | [I-002](issues/I-002.md) |
 | The gap between paragraphs is the space after the first plus the space before the next: they are added, not collapsed (10 + 10 pt gives 20 pt). Percentage spacing adds the same way. The first paragraph's space before and the last paragraph's space after are not used. | [I-003](issues/I-003.md) |
 | Spacing given in points (`spcBef`, `spcAft` and `lnSpc` `spcPts`) is used in whole points, halves up: 4.2 → 4, 4.5 → 5, 0.5 → 1, 2.5 → 3, 13.5 → 14, 20.5 → 21. Percentage spacing is not rounded. | [I-009](issues/I-009.md) |
+| Latin text may break at any space, including before `.`, `,`, `;`, `:`, `!`, `?`, `)`, `]`, `%` or a closing quote (`”`, `’`, `»`), so a spaced ellipsis can start a line. Without a space before it, the punctuation stays with its word. | [I-004](issues/I-004.md) |
+| Kerning also applies across spaces (space+A, space+T, A+space and so on) in kerned runs, also where a run boundary falls next to the space, as long as the font and size are the same on both sides. | [I-005](issues/I-005.md) |
+| Complex-script characters (Hebrew, Arabic, Thai, Indic and so on) use the run's `cs` font. When the theme leaves the `cs` typeface empty, the theme's `a:font script` entry for the run's **language** is used (he-IL → Hebr, ar-SA → Arab), whatever script the letters are in: Arabic letters in a he-IL run use the Hebr font. Spaces and punctuation in such a run use that font too. Hebrew in an en-US run uses Arial for the letters and the Latin font for the spaces. | [I-006](issues/I-006.md) |
 
 ## Not implemented yet
 
@@ -28,13 +31,12 @@ says so. The numbers come from PowerPoint's PDF unless stated otherwise.
 | Rule | Issue |
 |---|---|
 | Glyphs are drawn (not laid out) at 600 dpi: the PDF's font size is the run size rounded to 1/600 inch (13.5 → 13.56, 12.75 → 12.72, 40 → 39.96) and the glyphs inside a word sit at 600-dpi rounded advances. The difference from the 1/576-inch layout is absorbed by the spaces, so word starts follow the layout. Not reproduced: the differences are below 0.06 pt, invisible at the review resolution. | [K2](issues/K2.md) |
-| Kerning also applies across spaces (space+A, space+T, A+space). | [I-005](issues/I-005.md) |
 | A letter followed by a hyphen-minus is not kerned. | [I-011](issues/I-011.md) |
-| Latin text may break at any space, including before `.`, `,`, `;` or `)`, so a spaced ellipsis can start a line. | [I-004](issues/I-004.md) |
 | A superscript with `baseline="30000"` is raised by 30% of the run size and drawn at 2/3 of the size. | [I-010](issues/I-010.md) |
 | When a line is centred, its trailing space counts in the line width. | [I-013](issues/I-013.md) |
 | Underline (and strikeout) position and thickness come from the font's own metrics (`post` and `OS/2`). | [K4](issues/K4.md) |
-| Theme fonts for other scripts (`a:font script="Hebr"`) are used for runs in that script. | [I-006](issues/I-006.md) |
+| A line that mixes fonts is only a little taller than a line in its main font: 13.5 pt Calibri with an Arial run is 0.04 pt taller, with its baseline 0.16 pt lower (measured once; the rule is not known yet). | [I-020](issues/I-020.md) |
+| Hebrew letters that combine with a mark into one glyph (bet with dagesh) are drawn with the mark. | [I-021](issues/I-021.md) |
 | Run-level effects (`a:rPr/a:effectLst`, such as `outerShdw`) are drawn: a blurred, offset copy of the text. | [I-015](issues/I-015.md) |
 | With `normAutofit lnSpcReduction`, the first baseline moves up by about 0.21 em at 80% spacing (low confidence). Line spacing other than 100% also moves the first baseline: at `lnSpc` 150% it sits 7.6 pt lower at 18 pt, and exact 20 / 21 pt spacing puts it 0.36 / 0.18 pt higher than Euro-Office does. | [I-017](issues/I-017.md) |
 

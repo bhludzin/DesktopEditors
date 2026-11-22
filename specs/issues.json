@@ -807,9 +807,14 @@
    ],
    "group": "wrap-other",
    "id": "I-004",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs d3452db46b (fix(slide): break, kern and pick script fonts like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: ParaRun.Recalculate_Range (word/Editor/Run.js) accepts a character as a line start when a space precedes it and it is not East Asian, even if CanBeAtBeginOfLine() refuses it, so Latin text can break at any space. Without a space the old rule holds (\"word.\" stays glued), East Asian kinsoku is unchanged, and Word documents are not affected (Paragraph.IsSlideText). Test deck break-kern-rules (work folder decks/break-kern-rules, make_break_kern_deck.py and break_lines.py): 60 boxes, 12 widths from 96 to 228 pt, with \". . .\", \",\", \";\", \":\", \"!\", \"?\", \")\", \"]\", \"%\" and the closing quotes ” ’ » after a space. PowerPoint breaks before every one of them. Before, 38 of the 60 boxes broke differently; now none do (476 of 476 lines). Slides with findings: 35 0.8684->0.9894 (lines 10->18 of 18), 257 0.9781->0.9968 (7->10/10), 594 0.9739->0.9864 (21->23/23; the last word no longer prints over Rectangle 7), 613 0.8256->0.9813 (45->55/55), 755 0.9915->0.9936 (20->22/22). Also better, with spaced ellipses the review had not flagged: 396 0.8888->0.9614 (13->21/21) and 403 0.8867->0.9596 (11->19/19). Harness run i004-i005-i006-c (sdkjs d3452db46b, I-004, I-005 and I-006 together) vs spacing-i002-i003-i009-c: lines 99.6% -> 99.9% (15346 -> 15388 of 15410), identical slides 774 -> 781 of 835, SSIM 0.9861 -> 0.9866. Line breaks better on 8 slides (35, 257, 396, 403, 594, 613, 674, 755) and worse on none; only 9 slides changed at all, SSIM better on 8 and worse on 1 (674, 0.9807 -> 0.9494, see I-020)."
+    }
+   ]
   },
   {
    "key": "glyphs-fonts/3",
@@ -833,9 +838,14 @@
    ],
    "group": "glyphs-fonts",
    "id": "I-005",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs d3452db46b (fix(slide): break, kern and pick script fonts like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: CParagraphTextShaper (word/Editor/Paragraph/TextShaper.js) adds the font's pair kerning on both sides of a space to the space's width when the runs are kerned (a:rPr/@kern at or under the size): the pair before the space and the pair after it, each measured by shaping the two characters with and without HarfBuzz kerning (cached per font). It also works across run boundaries when font, style and size are the same on both sides. Spaces stay separate items, so line breaking and justification are unchanged. Calibri has no space pairs, so Calibri text does not change. Test deck break-kern-rules slide 6 (kern_words.py), line ends at 48 pt, PowerPoint / before / now: TNR \"Of All Things\" 265.86 / 269.42 / 265.91; \"A Tale To Tell\" 271.25 / 276.49 / 271.24; Arial \"A Test Yes A\" 263.66 / 270.62 / 263.58; TNR \"VA AV TA AT\" (letter+space pairs) 268.69 / 280.87 / 268.54; with spc=-300 229.75 / 233.42 / 229.91; split into three runs 265.82 / 269.42 / 265.91; TNR 24 pt 200.06 / 204.84 / 200.00. Every word start is now within 0.16 pt of PowerPoint (it was up to 12.2 pt off). kern=0, Calibri and TNR 11 pt (below kern=1200) are unchanged and still match. Slide 1 (the finding): 0.9421 -> 0.9784. Harness run i004-i005-i006-c (sdkjs d3452db46b, I-004, I-005 and I-006 together) vs spacing-i002-i003-i009-c: lines 99.6% -> 99.9% (15346 -> 15388 of 15410), identical slides 774 -> 781 of 835, SSIM 0.9861 -> 0.9866. Line breaks better on 8 slides (35, 257, 396, 403, 594, 613, 674, 755) and worse on none; only 9 slides changed at all, SSIM better on 8 and worse on 1 (674, 0.9807 -> 0.9494, see I-020)."
+    }
+   ]
   },
   {
    "key": "glyphs-fonts/6",
@@ -877,9 +887,14 @@
     "Same slide (674), same object (Rectangle 5), same he-IL run. One finding describes the Hebrew glyphs (S0674-1) and the other the line around them (S0674-2). Both trace the cause to the dropped Hebr script font and FontScheme.checkFont falling back to +mn-lt, and pictures-misc/4 asks for this merge. The first fix (keep the script fonts and resolve cs by script) is shared. glyphs-fonts/6's 'Latin text switches font' half may need a second change in the fallback segmentation if it persists afterwards."
    ],
    "id": "I-006",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs d3452db46b (fix(slide): break, kern and pick script fonts like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor, in four parts. (1) The theme's supplemental fonts (<a:font script typeface>) are read (BinaryPPTYLoader.ReadFontCollection record 3) and kept in FontCollection.scriptFonts. (2) A run's theme cs font (+mn-cs, +mj-cs) resolves, when the theme leaves the cs typeface empty, to the script font for the run's language: he-IL -> Hebr, ar-SA -> Arab, th -> Thai, hi -> Deva and so on (FontScheme.checkSlideCSFont, AscFormat.getComplexScriptForLanguage). x2t writes an empty theme typeface as \"Arial\", so a cs of \"Arial\" counts as empty when the theme has script fonts; a theme that really sets cs to Arial would get the script font instead (PowerPoint's themes leave cs empty). (3) In slide text, complex-script characters (Hebrew, Arabic, Syriac, Thaana, Indic, Thai, Lao, Tibetan, Khmer and their presentation forms) use the cs font, as in PowerPoint, instead of the ASCII slot Word gives Hebrew and Arabic without RTL or cs. Spaces, punctuation and other neutral characters use the cs font too in runs whose language is a complex-script one, unless a letter of another script comes before them in the run (CParagraphTextShaper.GetFontSlot, private_HandleSpace). (4) The garbled Hebrew had a second cause, independent of the font, which already existed in release 9.3.8: for right-to-left text HarfBuzz returns the glyphs in visual order, but the code points were handed out in logical order. Each glyph therefore carried another letter's code point, and the PDF is drawn from those code points (repeated shin, missing lamed, detached marks). CCodePointsCalculator now walks the clusters backwards for RTL runs (common/libfont/engine.js), and a cluster with several glyphs matches each glyph to its code point through the font's cmap (grapheme.js FillCodePointsByCmap). Test deck script-font-rules (work folder decks/script-font-rules, make_script_font_deck.py and font_per_case.py). Its theme maps Hebr to Times New Roman and Arab to Courier New, so each source is visible. he-IL Hebrew and he-IL Arabic both use the Hebr font: the language decides, not the letters. ar-SA Hebrew and ar-SA Arabic use the Arab font. en-US Hebrew uses Arial for the letters and Calibri for the spaces. he-IL Latin stays Calibri. Spaces inside a he-IL run use the Hebr font. The fonts now match PowerPoint in all 9 boxes, SSIM 0.9948. Slide 674: the Hebrew is now in Arial, in visual order and with its marks, and the Latin text on that line stays Calibri. The fallback-font spill came from the missing Hebrew font and is gone. Line breaks 18 -> 19 of 21 lines (the 2 left differ only in the extracted Hebrew text). Its SSIM fell 0.9807 -> 0.9494 because the line holding the Arial run is now taller than PowerPoint makes it (I-020), and the bet keeps no dagesh in the PDF (I-021). Harness run i004-i005-i006-c (sdkjs d3452db46b, I-004, I-005 and I-006 together) vs spacing-i002-i003-i009-c: lines 99.6% -> 99.9% (15346 -> 15388 of 15410), identical slides 774 -> 781 of 835, SSIM 0.9861 -> 0.9866. Line breaks better on 8 slides (35, 257, 396, 403, 594, 613, 674, 755) and worse on none; only 9 slides changed at all, SSIM better on 8 and worse on 1 (674, 0.9807 -> 0.9494, see I-020)."
+    }
+   ]
   },
   {
    "key": "outlines/1",
@@ -1571,6 +1586,58 @@
     {
      "date": "2026-11-21",
      "note": "Superseded by K3 (with K2): the fitted 0.25 pt reduction (PRESENTATION_LINE_WIDTH_REDUCTION) was compensating for the advance drift of K2. With PowerPoint's 1/576-inch advances in place, the text width is now the box width minus insets rounded down to whole 1/576-inch units. Run k2-k3-layout576: 99.6% of lines break like PowerPoint (95.1% when this fix landed)."
+    }
+   ]
+  },
+  {
+   "id": "I-020",
+   "title": "A line that mixes fonts (Calibri text with an Arial run) grows by 0.58 pt above the baseline in Euro-Office; PowerPoint lowers the baseline by only 0.16 pt",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-position",
+    "text-line-spacing"
+   ],
+   "description": "Found while fixing I-006, not by the review. Slide 674, Rectangle 5: line 1 holds 13.5 pt Calibri and, since I-006, a 13.5 pt Arial he-IL run. Baselines in the PDFs, in pt from the page top, for lines 1, 3 and 4: PowerPoint 382.01, 414.29, 430.49; Euro-Office before I-006 (all Calibri) 381.85, 414.25, 430.45; Euro-Office now 382.43, 414.83, 431.03. PowerPoint puts line 1's baseline 0.16 pt below where an all-Calibri line would have it, and every later line 0.04 pt lower: the mixed line is 0.04 pt taller, with 16.08 pt from its baseline to the next instead of 16.2. Euro-Office makes the mixed line 0.58 pt taller, all of it above the baseline, so the whole box's text sits 0.42-0.54 pt below PowerPoint's and the slide's SSIM fell 0.9807 -> 0.9494 with the I-006 fix.",
+   "powerpoint": "Measured once: a 13.5 pt line that mixes Calibri and Arial is 0.04 pt taller than an all-Calibri line, with its baseline 0.16 pt lower. The rule is not known. The largest win ascent and descent are both Calibri's, which would change nothing. Splitting the 1.2 em line at each font's win ascent / descent ratio and taking the larger parts would give 0.49 pt.",
+   "euro_office": "CTextMetrics.Update keeps the largest ascent, descent and line gap of the line's fonts separately. Calibri (ascent 0.952, descent 0.269 em, no gap in Euro-Office's terms) and Arial (0.905, 0.212, gap 0.033 em) together give Calibri's ascent and descent plus Arial's gap, a line taller than either font makes. The gap alone is 0.44 pt at 13.5 pt; the line grows by 0.58 pt in the PDF.",
+   "suspected_cause": "Word's way of combining the metrics of the fonts on a line, applied to slides. Not confirmed, and PowerPoint's own rule still has to be measured.",
+   "code_area": "sdkjs word/Editor/Styles.js CTextMetrics.Update (about line 15344); the line metrics in ParaRun.Recalculate_LineMetrics and Paragraph.private_RecalculateLineMetrics; percentage line spacing in the presentation path of Paragraph line recalculation.",
+   "fix_idea": "Measure first: a test deck with lines of Calibri plus one run in another font (Arial, Times New Roman, Segoe UI, Cambria, a larger Calibri run) at 100%, 90% and 150% line spacing and two sizes, with the baselines read from PowerPoint's PDF. Then change, for slide text only, how the line's ascent, descent and gap are combined. Related to I-016 (Times New Roman first baseline) and I-017 (first baseline at other line spacings).",
+   "confidence": "low",
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Opened from the i004-i005-i006 runs: the only slide that got worse (674) got worse by this."
+    }
+   ]
+  },
+  {
+   "id": "I-021",
+   "title": "Hebrew bet with dagesh (composed by HarfBuzz into one glyph) is drawn without the dot in Euro-Office's PDF",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "font",
+    "other"
+   ],
+   "description": "Found while fixing I-006, not by the review. Slide 674: the he-IL word בַּז (bet, dagesh, patah, zayin) is drawn in Arial since I-006, but in Euro-Office's PDF the bet has no dagesh dot; PowerPoint's has it. HarfBuzz composes bet + dagesh into one glyph (Arial's U+FB31). Euro-Office's PDF maps that glyph to both code points in ToUnicode, as it should, yet the shape drawn is the plain bet. Shin + shin dot (U+FB2A) is composed the same way on this line and may lose its dot too (not checked).",
+   "powerpoint": "Draws the bet with its dagesh (one glyph in its PDF, which ToUnicode maps to plain bet).",
+   "euro_office": "Draws the composed bet + dagesh glyph as plain bet.",
+   "suspected_cause": "The PDF output appears to pick each glyph from the code points stored with it (see I-006's log) rather than from the glyph id, so a composed glyph whose first code point is the plain letter is drawn as that letter. That would be in the native PDF writer (core), not in sdkjs. Not confirmed.",
+   "code_area": "sdkjs common/libfont/grapheme.js (code points per glyph, FillCodePointsByCmap) and the PDF writer in core that turns graphemes into PDF glyphs.",
+   "fix_idea": "Trace how the PDF writer chooses the glyph for a grapheme. If it goes by the first code point, give it the glyph id. If that cannot change, a slide-only fallback is to keep the dagesh and shin dot as separate mark glyphs (no composition) for fonts whose composed forms are not reachable by code point.",
+   "confidence": "low",
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Opened from the i004-i005-i006 runs (slide 674), as what is left of the Hebrew differences after I-006."
     }
    ]
   }

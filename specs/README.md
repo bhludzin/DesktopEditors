@@ -68,4 +68,7 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text. A composed bet with dagesh loses its dot in the
-  PDF (I-021, found while fixing I-006).
+  PDF (I-021, found while fixing I-006). The harness converts with the font list made on
+  Euro-Office's build server, so fonts installed only on this PC (Office fonts, Aptos) are
+  substituted in its renders (I-023, found while fixing I-020; the 838-slide deck is not
+  affected).

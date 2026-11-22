@@ -55,11 +55,14 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   size their line, paragraph spacing after and before are added, and point spacing is used
   in whole points. I-004 + I-005 + I-006 (d3452db46b): a line may start after any space,
   kerning applies across spaces, and complex-script runs use the theme's script font for
-  their language, with right-to-left text no longer garbled. Text lines breaking like
-  PowerPoint rose from 87.1% (release 9.3.8) to 99.9%, slides with identical line breaks
-  from 443 to 781 of 835, and mean SSIM from 0.890 to 0.987 (run i004-i005-i006-c).
+  their language, with right-to-left text no longer garbled. I-010 + I-011 + I-013 +
+  I-022 (4c3273edbc): superscripts at 2/3 size with the stated raise, no kerning
+  into a hyphen, trailing spaces counted when aligning in `wrap="none"` boxes, and a line
+  break allowed after an en dash. Text lines breaking like PowerPoint rose from 87.1%
+  (release 9.3.8) to 99.97%, slides with identical line breaks from 443 to 784 of 835, and
+  mean SSIM from 0.890 to 0.988 (run i010-i011-i013-dash-c).
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
-  (slide 255). Slides 93, 116, 510 and 525 still break some lines differently, and 674
+  (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text. Two minor issues were found while fixing I-006:
   a line that mixes fonts is taller than in PowerPoint (I-020, slide 674), and a composed
   bet with dagesh loses its dot in the PDF (I-021).

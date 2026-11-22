@@ -353,6 +353,10 @@
     {
      "date": "2026-11-21",
      "note": "Hypothesis checked on PowerPoint's PDF (all 838 pages) before coding; scripts and outputs in review/grouping/work-glyphs-fonts/k2-layout-check (k2starts.py: word starts, k2words.py: within words). PowerPoint uses two grids. (1) Layout: the start positions of words along a line (so line widths and line breaks) follow the 1/576-inch model with S pt = 8 x S units per em (13.5 pt -> 108): each glyph's own advance rounded to a whole unit (halves up), spaces included, and pair kerning added UNROUNDED. Word-start residual (PowerPoint minus model), mean and slope: regular 13.5 pt -0.015 pt, -0.006 pt per 100 pt (100588 word starts); bold 13.5 -0.011, -0.007 (5233); regular 18 -0.11, -0.03; bold 30 -0.01, -0.006; regular 10.5 (kerning off at < 12 pt) -0.015, -0.006. Exact design widths: +0.10, +0.047 (13.5); +0.64, +0.21 (18); -0.41, -0.32 (bold 13.5). The issue's variant with the kerning truncated toward zero is rejected: -0.24, -0.10 at 13.5 and -0.44, -0.14 at 18 (rounded kerning comes close to exact). (2) Drawing: the PDF's font size is the run size rounded to 1/600 inch (13.56, 12.72, 39.96, 44.04) and the glyphs inside a word sit at 600-dpi rounded advances (76% of 13.5 pt words within 0.03 pt of that model, 23-26% for linear or 1/576 widths); the spaces absorb the difference, so word starts follow the layout grid. This is why per-glyph and within-word measurements pointed at 600 dpi and line ends at 576. Two measurement traps on the way: PowerPoint's TJ adjustments are sparse, so single-glyph advances are biased, and a parser bug (Tc kept across Q) made the 10.5 pt list text on 627-648 look 0.5 px per glyph wide. Regular 12.75 pt fits less well (-0.17 pt, -0.06 per 100 pt), bold 12.75 fits (-0.03, -0.02). Fixed in word/Editor/Paragraph/TextShaper.js, presentation editor, baseline text: the unkerned advance of each single-glyph grapheme (measured before shaping and cached per font and glyph, because the font engine cannot be called while the shaped glyphs are read) is rounded to 1/8 pt at the run size and the shaper's kerning is added back; spaces are rounded the same way. word/Editor/Paragraph/RunContent/Space.js now keeps fractional sizes for spaces as CRunText does (a 12.75 pt space was measured at 13 pt). Measured together with K3. Harness run k2-k3-layout576 vs k1-filled-heads: lines 96.7% -> 99.6% (14903 -> 15346 of 15410), identical slides 673 -> 774, SSIM 0.9576 -> 0.9834; line breaks 109 slides better and 0 worse; SSIM 828 better and 4 worse: 255 (-0.0068; regular 12.75 pt lines now end about 0.45 pt late where linear widths ended about 0.2 pt early on average, breaks unchanged; the other 12.75 pt slides 85, 478, 684, 685, 692, 693, 700 improved), 496, 203, 308 (0.0005 or less). All 116 K2 slides better, 110 now break exactly like PowerPoint (26 before); still different: 35, 93, 116, 510, 525, and 163 with every line matched. K2 alone with K3's 0.25 pt reduction kept (run k2-adv-576): 97.8%, 706 identical, SSIM 0.9789, but 54 slides worse on line breaks than k1-filled-heads, so the two only work together."
+    },
+    {
+     "date": "2026-11-22",
+     "note": "The four slides that still broke some lines differently after K2 and K3: 116 lacked a break after an en dash (I-022), and 510 and 525 had superscripts drawn too small (I-010). All three now match PowerPoint. On 93 Euro-Office keeps 'like' at the end of a line where PowerPoint wraps it. In Euro-Office's layout that line ends less than 0.01 pt inside the text width, and at PowerPoint's own drawn positions it would fit too. So this is K2's residual, not a separate rule, and it is left as is."
     }
    ]
   },
@@ -1199,7 +1203,7 @@
     "S0523-1"
    ],
    "description": "Ordinal superscripts ('th', 'rd') in 18 pt Calibri paragraphs are drawn about 0.6-0.85 px higher in Euro-Office, slightly narrower (about 0.5 px per 'th') and about 10-13% lighter. The narrower advance adds to line drift (-2.5 px at line end on 523). The PDF of slide 508 gives the exact values. PowerPoint draws 'th' at Tf 12.0 with the baseline raised 5.40 pt (135.74 -> 130.34). Euro-Office draws it at Tf 11.5 raised 6.30 pt (135.76 -> 129.46).",
-   "powerpoint": "Raise = baseline/100000 x run size = 0.30 x 18 = 5.4 pt. The superscript is drawn at 2/3 of the run size (12.0 pt).",
+   "powerpoint": "Raise = baseline/100000 x run size = 0.30 x 18 = 5.4 pt. The superscript is drawn at 2/3 of the run size (12.0 pt). Measured on test deck dash-super-rules: the size is exactly 2/3 of the run size for superscripts and subscripts at every size tried (13.5 -> 9, 12.75 -> 8.5, 9 -> 6 pt), and the baseline moves by the stated fraction of the run size either way (baseline=-25000 lowers 18 pt text by 4.5 pt).",
    "euro_office": "Ignores the percentage. It raises by AscCommon.vaKSuper (0.35) x 18 = 6.3 pt and scales by vaKSize 0.65, rounded to half points by AlignFontSize: 11.7 -> 11.5 pt.",
    "suspected_cause": "The reader keeps only the sign of a:rPr/@baseline (VertAlign super/sub) and drops the value. Drawing and measuring then use the Word constants vaKSuper/vaKSize.",
    "code_area": "sdkjs/common/Shapes/Serialize.js: ReadRunProperties (8904), case 2 at 8933-8938 (baseline -> VertAlign only); sdkjs/common/commonDefines.js 790-792 (vaKSize 0.65, vaKSuper 0.35, vaKSub -0.141); word/Editor/Paragraph/draw/content-draw-state.js ParagraphContentDrawState.prototype.calculateY (716); word/Editor/Common.js AlignFontSize (560).",
@@ -1212,9 +1216,14 @@
    ],
    "group": "vertical",
    "id": "I-010",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 4c3273edbc (fix(slide): superscripts, hyphens, dashes and trailing spaces like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor. The reader keeps a:rPr/@baseline as a fraction on the run (CTextPr.Baseline, common/Shapes/Serialize.js; written back by SerializeWriter.js, and carried through copy, merge and the binary change format in word/Editor/Styles.js). For slide text, CTextPr.GetScriptSizeCoef gives 2/3 and CTextPr.GetScriptShift the stated fraction (30% and -25% when baseline has no value). The size is used exactly, without half-point rounding (CRunText.SetMetrics, CRunSpace and the shaper's layout size). The shift is used for drawing (content-draw-state.js calculateY), cursor positions (position-calculator.js) and strikeout and underline (line-draw-state.js). Word documents keep vaKSize, vaKSuper and vaKSub. Test deck dash-super-rules slide 5 (work folder decks/dash-super-rules, make_dash_super_deck.py and measure_dash_super.py): 'th', 'st' and '2' at run sizes 18, 13.5, 24, 12.75, 40, 20 and 9 pt with baseline 30000, 50000, 10000, -25000 and -50000. PowerPoint draws them at exactly 2/3 of the run size (18 -> 12, 13.5 -> 9, 24 -> 16, 12.75 -> 8.5, 9 -> 6). It moves the baseline by the stated fraction of the run size: +5.40, +9.00 and +1.80 pt at 18 pt, and -4.44 and -8.88 pt in the PDF for -4.5 and -9 (one 600-dpi step off). Euro-Office now draws the same sizes and shifts in all 11 cases, to within 0.12 pt. Before, at 18 pt, it drew 11.5 pt raised 6.30 pt. Word starts after a superscript are within 0.21 pt of PowerPoint's. PowerPoint draws the 12 pt 'th' 0.13 pt wider than its design width before a comma and 0.12 pt narrower before a space, so no rule was found for the rest. Slide 508's PDF: 't' and 'h' at 12.00 pt raised 5.40 pt, as in PowerPoint (11.50 pt and 6.30 pt before). Slides 510 and 525 now break every line like PowerPoint (16 -> 21 and 14 -> 21 of 21 lines; SSIM 0.8793 -> 0.9778 and 0.8419 -> 0.9800): the narrower 11.5 pt superscripts had let a word onto a line where PowerPoint wraps it. Finding slides: 488 0.9810 -> 0.9837, 508 0.9548 -> 0.9559, 509 0.9131 -> 0.9142, 511 0.9374 -> 0.9390, 516 0.9753 -> 0.9778, 519 0.9779 -> 0.9805, 520 0.9766 -> 0.9798, 522 0.9810 -> 0.9815, 523 0.9746 -> 0.9798. Harness run i010-i011-i013-dash-c (sdkjs 4c3273edbc, I-010, I-011, I-013 and I-022 together) vs i004-i005-i006-c: lines 99.9% -> 99.97% (15388 -> 15406 of 15410), identical slides 781 -> 784 of 835, SSIM 0.9866 -> 0.9875; line breaks better on 3 slides (116, 510, 525) and worse on none; SSIM better on 62 slides and worse on none by more than 0.001 (684 and 685 lost 0.0001 and 0.0002)."
+    }
+   ]
   },
   {
    "key": "glyphs-fonts/2",
@@ -1246,9 +1255,14 @@
    ],
    "group": "glyphs-fonts",
    "id": "I-011",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 4c3273edbc (fix(slide): superscripts, hyphens, dashes and trailing spaces like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: CParagraphTextShaper.HandleRun (word/Editor/Paragraph/TextShaper.js) flushes the word before a hyphen-minus that allows a break after it, so the hyphen is shaped as its own segment and no kern pair reaches into it. The pair out of the hyphen was already unkerned. En and em dashes are unchanged: their pairs already matched PowerPoint. Test deck dash-super-rules slide 6, line ends at 18 pt, PowerPoint / before / now: bold 'ASHURST-MCGEE T-T' 156.77 / 154.23 / 156.69; 'Latter-day r-r t-t' 118.13 / 116.48 / 118.09; 'V-A -T T- Y-o' 90.76 / 87.44 / 90.76; 'T–T T—T Y–o r—r' 128.70 / 128.64 / 128.64. Every glyph is now within 0.27 pt of PowerPoint (the bold line's remaining drift is K2's), against up to 3.3 pt before, and no hyphen adds more than 0.07 pt. Finding slides: 497 0.9587 -> 0.9731, 498 0.9665 -> 0.9861, 500 0.9609 -> 0.9783, 503 0.9448 -> 0.9751, 511 0.9374 -> 0.9390 (with I-010), 513 0.9781 -> 0.9799, 567 0.9908 -> 0.9952. Harness run i010-i011-i013-dash-c (sdkjs 4c3273edbc, I-010, I-011, I-013 and I-022 together) vs i004-i005-i006-c: lines 99.9% -> 99.97% (15388 -> 15406 of 15410), identical slides 781 -> 784 of 835, SSIM 0.9866 -> 0.9875; line breaks better on 3 slides (116, 510, 525) and worse on none; SSIM better on 62 slides and worse on none by more than 0.001 (684 and 685 lost 0.0001 and 0.0002)."
+    }
+   ]
   },
   {
    "key": "outlines/3",
@@ -1308,7 +1322,7 @@
   },
   {
    "key": "vertical/6",
-   "title": "Trailing spaces are left out of the line width when centring, so a centred line ending in a space sits half a space too far right",
+   "title": "In boxes with wrap=\"none\", trailing spaces are left out of the line width when centring or right-aligning, so such a line sits half a space (or a whole space) too far right",
    "severity": "minor",
    "categories": [
     "text-position"
@@ -1322,7 +1336,7 @@
     "S0709-1"
    ],
    "description": "Centred labels in wrap=none spAutoFit boxes whose run text ends with a space ('Establish Zion (The Law Of Consecration) ', 'Bind Up The Testimony, ', 'Among The Gentiles ', ...) are shifted right as a whole. The shift is 2.4-2.85 px at 21 pt bold and 2.9-3.15 px at 24 pt bold, exactly half a Calibri Bold space. Lines of the same boxes without a trailing space match within 0.25 px. The box outlines do not move.",
-   "powerpoint": "The trailing space's advance is part of the centred line width, so the visible glyphs end up half a space left of centre.",
+   "powerpoint": "In a box with wrap=\"none\", the trailing spaces are part of the line width for centred and right-aligned lines, on every line, including one that ends at an <a:br/>: the visible glyphs move left by half the trailing spaces when centred and by all of them when right-aligned. In a wrapped box they do not count, even when the text fits on one line (test deck dash-super-rules slide 6).",
    "euro_office": "Centres only the visible part. Range.W excludes the trailing spaces, which are accumulated in PRSC.SpaceLen and never added.",
    "suspected_cause": "Word's rule that trailing spaces hang past the margin (so they do not affect alignment) is applied to slide text.",
    "code_area": "sdkjs/word/Editor/Paragraph_Recalculate.js: Paragraph.prototype.private_RecalculateLineAlign (1897), align_Center case 'X = Range.X + (RangeWidth - Range.W) / 2' (2043), align_Right at 2026. Trailing-space accounting is in word/Editor/Run.js ParaRun.prototype.Recalculate_Range_Width (5233): para_Space adds to PRSC.SpaceLen, which is added to Range.W only when a following letter arrives.",
@@ -1335,9 +1349,14 @@
    ],
    "group": "vertical",
    "id": "I-013",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 4c3273edbc (fix(slide): superscripts, hyphens, dashes and trailing spaces like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor, with a narrower rule than the issue assumed (measured on test deck dash-super-rules slide 6): only boxes with wrap=\"none\" count trailing spaces. CShape.recalculateDocContent (common/Drawings/Format/Shape.js) marks the text of a slide shape with wrap=\"none\" (SlideNoWrap). Paragraph.private_RecalculateLineAlign (word/Editor/Paragraph_Recalculate.js) then takes the trailing spaces (PRSC.SpaceLen) off the free width for left-to-right right and centre alignment. Left edge of the line in pt from the box, PowerPoint / before / now, bold 24 pt: 'Among The Gentiles ' centred 127.03 / 129.69 / 127.00; with two trailing spaces 124.27 / 129.69 / 124.31; right-aligned 254.02 / 259.38 / 254.00; 'Among The ' before <a:br/> 170.54 / 173.33 / 170.64 and the next line 'Gentiles ' 186.38 / 189.06 / 186.38; the same one-line text in a wrapped box 129.74 / 129.67 / 129.67, unchanged as in PowerPoint. Wrapped three-line centred and right-aligned 18 pt boxes are unchanged and within 0.1 pt. Finding slides: 214 0.9637 -> 0.9801, 217 0.9808 -> 0.9972, 219 0.9811 -> 0.9975, 704 0.9717 -> 0.9947, 708 0.9361 -> 0.9752, 709 0.9378 -> 0.9711. Harness run i010-i011-i013-dash-c (sdkjs 4c3273edbc, I-010, I-011, I-013 and I-022 together) vs i004-i005-i006-c: lines 99.9% -> 99.97% (15388 -> 15406 of 15410), identical slides 781 -> 784 of 835, SSIM 0.9866 -> 0.9875; line breaks better on 3 slides (116, 510, 525) and worse on none; SSIM better on 62 slides and worse on none by more than 0.001 (684 and 685 lost 0.0001 and 0.0002)."
+    }
+   ]
   },
   {
    "key": "outlines/4",
@@ -1638,6 +1657,31 @@
     {
      "date": "2026-11-22",
      "note": "Opened from the i004-i005-i006 runs (slide 674), as what is left of the Hebrew differences after I-006."
+    }
+   ]
+  },
+  {
+   "id": "I-022",
+   "title": "No line break after an en dash, so '8:34–35' is moved to the next line as one unit",
+   "severity": "major",
+   "status": "fixed",
+   "fixed_in": "sdkjs 4c3273edbc (fix(slide): superscripts, hyphens, dashes and trailing spaces like PowerPoint)",
+   "categories": [
+    "text-wrap"
+   ],
+   "description": "Found while checking the four slides that still broke lines differently after K2, not by the review (the slide's finding, S0116-1, is grouped under K2). Slide 116: in a 13.5 pt Calibri quote PowerPoint ends a line with 'and I know your doing” (Morm. 8:34–' and starts the next with '35)'. Euro-Office has no break opportunity after the en dash, moves '8:34–35)' to the next line as one unit, and the rest of the box reflows: 16 of 22 lines matched.",
+   "powerpoint": "A line may break after an en dash (U+2013), between digits ('8:34–35', '1850–1851', 'pp. 12–14') as between letters ('slain–army'). The dash stays at the end of the line. Measured on test deck dash-super-rules slide 1, 8 boxes from 96 to 222 pt wide. Em dash, hyphen-minus and slash already matched Euro-Office (slides 2-4).",
+   "euro_office": "A break is allowed after a character whose IsSpaceAfter() is true; CRunText.private_IsSpaceAfter sets it for the hyphen-minus and the em dash but not for the en dash.",
+   "suspected_cause": "The en dash is missing from the break-after characters used for slide text.",
+   "code_area": "word/Editor/Run.js: ParaRun.prototype.Recalculate_Range (isBreakAfter); word/Editor/Paragraph/RunContent/Text.js: CRunText.prototype.private_IsSpaceAfter.",
+   "fix_idea": "For slide text, treat U+2013 as a break-after character in Recalculate_Range.",
+   "confidence": "high",
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: ParaRun.Recalculate_Range (word/Editor/Run.js) allows a break after an en dash in slide text (Paragraph.IsSlideText). Word documents are not affected. Test deck dash-super-rules slide 1 (en dash between digits, between letters, alone and in page ranges, at 8 widths): lines 40 -> 61 of 61, SSIM 0.944 -> 0.998. Slide 116: lines 16 -> 22 of 22, SSIM 0.9246 -> 0.9933. Harness run i010-i011-i013-dash-c (sdkjs 4c3273edbc, I-010, I-011, I-013 and I-022 together) vs i004-i005-i006-c: lines 99.9% -> 99.97% (15388 -> 15406 of 15410), identical slides 781 -> 784 of 835, SSIM 0.9866 -> 0.9875; line breaks better on 3 slides (116, 510, 525) and worse on none; SSIM better on 62 slides and worse on none by more than 0.001 (684 and 685 lost 0.0001 and 0.0002)."
     }
    ]
   }

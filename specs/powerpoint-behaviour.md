@@ -23,6 +23,10 @@ says so. The numbers come from PowerPoint's PDF unless stated otherwise.
 | Latin text may break at any space, including before `.`, `,`, `;`, `:`, `!`, `?`, `)`, `]`, `%` or a closing quote (`”`, `’`, `»`), so a spaced ellipsis can start a line. Without a space before it, the punctuation stays with its word. | [I-004](issues/I-004.md) |
 | Kerning also applies across spaces (space+A, space+T, A+space and so on) in kerned runs, also where a run boundary falls next to the space, as long as the font and size are the same on both sides. | [I-005](issues/I-005.md) |
 | Complex-script characters (Hebrew, Arabic, Thai, Indic and so on) use the run's `cs` font. When the theme leaves the `cs` typeface empty, the theme's `a:font script` entry for the run's **language** is used (he-IL → Hebr, ar-SA → Arab), whatever script the letters are in: Arabic letters in a he-IL run use the Hebr font. Spaces and punctuation in such a run use that font too. Hebrew in an en-US run uses Arial for the letters and the Latin font for the spaces. | [I-006](issues/I-006.md) |
+| A line may break after an en dash (U+2013), between digits (`8:34–35`, `1850–1851`) as between letters (`slain–army`). The dash stays at the end of the line. | [I-022](issues/I-022.md) |
+| Superscripts and subscripts (`a:rPr/@baseline`) are drawn at exactly 2/3 of the run size, with no rounding (13.5 → 9 pt, 12.75 → 8.5 pt). The baseline moves by the stated fraction of the run size: `baseline="30000"` raises 18 pt text by 5.4 pt, `-25000` lowers it by 4.5 pt. | [I-010](issues/I-010.md) |
+| A letter followed by a hyphen-minus is not kerned (`T-`, `r-`, `V-`). Pairs with en and em dashes are kerned as usual. | [I-011](issues/I-011.md) |
+| In a box with `wrap="none"`, trailing spaces count in the line width for centred and right-aligned lines, on every line, including one that ends at `<a:br/>`. In a wrapped box they do not count, even when the text fits on one line. | [I-013](issues/I-013.md) |
 
 ## Not implemented yet
 
@@ -31,9 +35,6 @@ says so. The numbers come from PowerPoint's PDF unless stated otherwise.
 | Rule | Issue |
 |---|---|
 | Glyphs are drawn (not laid out) at 600 dpi: the PDF's font size is the run size rounded to 1/600 inch (13.5 → 13.56, 12.75 → 12.72, 40 → 39.96) and the glyphs inside a word sit at 600-dpi rounded advances. The difference from the 1/576-inch layout is absorbed by the spaces, so word starts follow the layout. Not reproduced: the differences are below 0.06 pt, invisible at the review resolution. | [K2](issues/K2.md) |
-| A letter followed by a hyphen-minus is not kerned. | [I-011](issues/I-011.md) |
-| A superscript with `baseline="30000"` is raised by 30% of the run size and drawn at 2/3 of the size. | [I-010](issues/I-010.md) |
-| When a line is centred, its trailing space counts in the line width. | [I-013](issues/I-013.md) |
 | Underline (and strikeout) position and thickness come from the font's own metrics (`post` and `OS/2`). | [K4](issues/K4.md) |
 | A line that mixes fonts is only a little taller than a line in its main font: 13.5 pt Calibri with an Arial run is 0.04 pt taller, with its baseline 0.16 pt lower (measured once; the rule is not known yet). | [I-020](issues/I-020.md) |
 | Hebrew letters that combine with a mark into one glyph (bet with dagesh) are drawn with the mark. | [I-021](issues/I-021.md) |

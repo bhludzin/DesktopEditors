@@ -731,9 +731,14 @@
    ],
    "group": "vertical",
    "id": "I-002",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 42d5db5758 (fix(slide): space paragraphs and blank lines like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: ParaRun.Recalculate_LineMetrics now counts para_Space like text (UpdateLineMetricsText), and Paragraph.private_RecalculateLineMetrics skips the paragraph-mark fallback when a line without text already has metrics from its spaces. Test deck: a paragraph holding only a 13.5 pt space is 16.2 pt tall in PowerPoint (was 21.6 pt), with or without endParaRPr, and endParaRPr sz=2400 does not make it taller; a 24 pt or 36 pt space gives a 28.8 / 43.2 pt line; two space runs of 13.5 and 20 pt give the larger, 24 pt; and a 36 pt space on a 13.5 pt text line makes that line 43.2 pt tall in PowerPoint (37.34 / 22.08 pt baseline steps, Euro-Office now 37.26 / 22.14). Empty paragraphs and text lines with a larger endParaRPr were already right and are unchanged. Slides with findings: 6 0.9946->0.9981, 117 0.8186->0.9959, 244 0.9062->0.9816, 267 0.9132->0.9885, 658 0.8180->0.9125 (K2 remains there), 723 0.8410->0.9883. Harness run spacing-i002-i003-i009-c (sdkjs 42d5db5758, together with I-002/I-003/I-009) vs k2-k3-layout576: lines 99.6% -> 99.6%, identical slides 774 -> 774 (no slide changed its line breaks), SSIM 0.9834 -> 0.9861; 31 slides better and 0 worse on SSIM (27 by more than 0.01). 14 more slides changed in the PDF only by floating-point noise under 0.0001 pt. Every text line that moved on the changed slides moved towards PowerPoint's baseline, none away. Rules measured first on a 44-case test deck built for this (work folder decks/spacing-rules, with make_spacing_deck.py and measure_spacing.py): every case now within 0.1 pt of PowerPoint, SSIM 0.9895 -> 0.9980."
+    }
+   ]
   },
   {
    "key": "vertical/2",
@@ -764,9 +769,14 @@
    ],
    "group": "vertical",
    "id": "I-003",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 42d5db5758 (fix(slide): space paragraphs and blank lines like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: Paragraph.Get_CompiledPr keeps this paragraph's own space before instead of max(previous after, before) - previous after, so the previous paragraph's space after and this one's space before add up. The first-paragraph (no space before) and last-paragraph (no space after) rules are unchanged and match PowerPoint (test deck: spcBef 20 pt and spcBef 50% on the first paragraph are ignored). Test deck, 18 pt Calibri, gap above the 21.6 pt pitch: aft 10 + bef 10 = 20 pt (was 10), aft 10 + bef 4 = 14 (was 10), aft 6 + bef 12 = 18 (was 12), aft 50% + bef 50% = 21.6 (was 10.8), aft 10 + bef 50% = 20.8; at 150% line spacing the same. The deck's 24 pt headings (aft 15 + bef 13.5, rounded to 14 by I-009) step 57.8 pt as in PowerPoint (57.86). Slides with findings: 569 0.9118->0.9848, 624 0.9124->0.9780, 800 0.9654->0.9955, 801 0.9462->0.9973, 808 0.8961->0.9968, 809 0.8939->0.9967; the headings no longer print over the quote boxes. Harness run spacing-i002-i003-i009-c (sdkjs 42d5db5758, together with I-002/I-003/I-009) vs k2-k3-layout576: lines 99.6% -> 99.6%, identical slides 774 -> 774 (no slide changed its line breaks), SSIM 0.9834 -> 0.9861; 31 slides better and 0 worse on SSIM (27 by more than 0.01). 14 more slides changed in the PDF only by floating-point noise under 0.0001 pt. Every text line that moved on the changed slides moved towards PowerPoint's baseline, none away. Rules measured first on a 44-case test deck built for this (work folder decks/spacing-rules, with make_spacing_deck.py and measure_spacing.py): every case now within 0.1 pt of PowerPoint, SSIM 0.9895 -> 0.9980."
+    }
+   ]
   },
   {
    "key": "wrap-other/1",
@@ -1145,9 +1155,14 @@
    ],
    "group": "vertical",
    "id": "I-009",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 42d5db5758 (fix(slide): space paragraphs and blank lines like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor: Paragraph.Get_CompiledPr rounds point-based space before, space after and exact line spacing (lnSpc spcPts) to whole points, halves up (Paragraph.private_RoundSlideSpacing). Percentage spacing is left as it is. The import keeps the exact values, so files still save 450. Test deck (spcAft then spcBef, 18 pt Calibri): 4.1, 4.2, 4.25 and 4.4 pt -> 4; 4.5, 4.6 and 4.75 -> 5; 0.5 -> 1; 1.5 -> 2; 2.5 -> 3; 10.5 -> 11; 13.5 -> 14 (halves up, not to even, not ceiling). lnSpc spcPts 20.25 -> 20, 20.5 -> 21, 20.75 -> 21 (line pitch). This deck has no lnSpc spcPts. Slides with findings: 16 of 18 better (436 0.9587->0.9867, 439 0.9463->0.9905, 542-544/547 about 0.88->0.99, 837 0.8999->0.9928, ...). 247 and 248 keep the same 800-px image, but their PDF baselines moved 0.5 pt to within 0.05 pt of PowerPoint's (the list on 247: 232.97 -> 233.47, PowerPoint 233.52); the rasterizer probably snaps both to the same pixel row. Also better, with 4.5 pt spacing the review had not flagged: 85 0.8106->0.9700, 477 0.9599->0.9924, 478 0.7944->0.9684, 595 0.9369->0.9477, 745 0.8595->0.9910. Harness run spacing-i002-i003-i009-c (sdkjs 42d5db5758, together with I-002/I-003/I-009) vs k2-k3-layout576: lines 99.6% -> 99.6%, identical slides 774 -> 774 (no slide changed its line breaks), SSIM 0.9834 -> 0.9861; 31 slides better and 0 worse on SSIM (27 by more than 0.01). 14 more slides changed in the PDF only by floating-point noise under 0.0001 pt. Every text line that moved on the changed slides moved towards PowerPoint's baseline, none away. Rules measured first on a 44-case test deck built for this (work folder decks/spacing-rules, with make_spacing_deck.py and measure_spacing.py): every case now within 0.1 pt of PowerPoint, SSIM 0.9895 -> 0.9980."
+    }
+   ]
   },
   {
    "key": "vertical/5",
@@ -1427,7 +1442,12 @@
    "id": "I-017",
    "status": "open",
    "fixed_in": null,
-   "log": []
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Related evidence from the spacing-rules test deck (not fixed): line spacing other than 100% moves the first baseline in PowerPoint, not only lnSpcReduction. 18 pt Calibri, first baseline below the box top (no insets): PowerPoint 16.80-16.85 pt at 100% and 24.41 pt at lnSpc 150% (Euro-Office 16.85 for both); exact lnSpc 20 pt: PowerPoint 15.24, Euro-Office 15.60; 21 pt: PowerPoint 16.20, Euro-Office 16.38. The line pitch itself matches. This deck uses lnSpc 90% on 3 slides and no exact line spacing."
+    }
+   ]
   },
   {
    "key": "vertical/9",

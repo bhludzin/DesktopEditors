@@ -26,3 +26,4 @@ read it together with the line metrics.
 | k2-adv-576 | experiment | 97.8% | 706/835 | 0.9789 | + K2 (1/576-inch advances), K3's 0.25 pt reduction kept; vs k1 89 slides better and 54 worse on breaks |
 | k2-576-red0 | experiment | 98.9% | 750/835 | 0.9822 | + K2, no width reduction; vs k1 94 better and 8 worse on breaks |
 | k2-k3-layout576 | e84bfe4efb | 99.6% | 774/835 | 0.9834 | + K2 + K3 (text width rounded down to 1/576 inch); vs k1 109 better and 0 worse on breaks, SSIM 828 better and 4 worse (255 -0.0068, the rest under 0.001) |
+| spacing-i002-i003-i009-c | 42d5db5758 | 99.6% | 774/835 | 0.9861 | + I-002 (spaces size their line), I-003 (paragraph spacing added), I-009 (point spacing in whole points); vs k2-k3-layout576 31 slides better and 0 worse on SSIM, line breaks unchanged |

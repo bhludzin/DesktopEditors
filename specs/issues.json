@@ -460,9 +460,17 @@
     "K4 and glyphs-fonts/5 are set in the same function, which shares one lineW between strike and underline, and both are explained by the same missing input, the font's decoration metrics. The PDF check above shows that post.underlinePosition/underlineThickness reproduce K4's sign and size (0.6 px higher, 0.1 px thinner). OS/2 yStrikeout* reproduce the strike offset and the bold thickness in glyphs-fonts/5. One change makes the function read the face's post/OS2 decoration metrics (with the current constants as fallback) and fixes both; glyphs-fonts/5 already proposes it."
    ],
    "id": "K4",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs 88cc4cc6cb (fix(slide): underline and strikethrough from the font's metrics like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the presentation editor. Measured on test deck decoration-rules (6 slides, 72 boxes: Calibri underline at 12 sizes from 8 to 54 pt, regular and bold; strikethrough regular and bold at 6 sizes; Times New Roman, Arial (each regular and bold), Cambria, Georgia at 24 pt and Calibri Light, Courier New, Verdana, Tahoma, Segoe UI, Calibri Italic at 13.5 pt; mixed sizes, scripts, double lines). All 36 Calibri cases fit the grid rule exactly. The font engine does not report the post and OS/2 decoration fields, so GetFontDecorationMetrics (common/libfont/file.js) reads them from the font's bytes, and ParagraphLineDrawState.updateSlideStrikeoutUnderlinePos draws slide text by the rule, centred on the bar; Word documents keep the old geometry. Test deck: SSIM 0.9809 -> 0.9909; every thickness matches; 55 of 82 bars match PowerPoint to 0.03 pt and the others are one 0.12 pt step off where Euro-Office's baseline differs from PowerPoint's by under 0.1 pt (10.5 and 12 pt Calibri, Times New Roman, Cambria, Georgia, Verdana, Tahoma, Segoe UI) or where the blend lands on a half step (13.5 + 24 pt). Not implemented: u=\"dbl\" and u=\"heavy\" (not used in the review deck). Harness run k4-c (sdkjs 88cc4cc6cb; the same scores as the uncommitted run k4-b) vs i010-i011-i013-dash-c: line breaks unchanged (784 of 835 identical), SSIM 0.9875 -> 0.9887, 146 slides better by more than 0.001 and none worse. On the 171 K4 slides, 682 of 745 thin bars in Euro-Office's PDF now match PowerPoint's to 0.03 pt and the other 63 are one 0.12 pt step off (before: 189 matched). Slide 125: underline band 340.50-341.34 as in PowerPoint (was 341.06-341.81). Slide 96: all seven strikes at PowerPoint's positions, 1.20 pt thick and 1.68 pt on the bold line (was 1.00 pt each, centred about 0.85 pt higher)."
+    }
+   ],
+   "powerpoint": "Draws underlines and strikethroughs as filled bars from the face's own metrics, on a 1/600-inch (0.12 pt) grid counted from the text box: the baseline is rounded down to the grid; the underline top is round(-post.underlinePosition / unitsPerEm x size) steps below it and the bar is round(post.underlineThickness / unitsPerEm x size) steps thick; the strikethrough top is round(OS/2 yStrikeoutPosition / unitsPerEm x size) steps above it and round(yStrikeoutSize / unitsPerEm x size) steps thick. Calibri: underline -232/134, strike 512/134, bold strike 512/186, so bold strikes are thicker; Times New Roman Bold and Arial Bold have thicker underlines. A strikethrough follows each run (a superscript's at its own 2/3 size and raised baseline), and so does a subscript's underline. A superscript's underline stays on the line's baseline at the full run size. Touching underlines on one baseline are drawn as one bar whose top and bottom are the width-weighted means of the runs' own, each rounded (13.5 + 24 pt Calibri: 13-20 and 23-36 steps below the baseline become 17-26). An underline alone on a line with larger plain text uses its own run's metrics. dblStrike draws two bars of the strike's thickness, directly above and below the single strike's place.",
+   "euro_office": "Before the fix: the strike centred 0.27 em above the baseline and the underline 0.4 x the line's text descent below it, both fontSize/18 pt thick for every face and weight (Calibri 13.5 pt: 0.75 pt instead of 0.84, about 0.5 pt too high). The PDF renderer centred the stroke on that y while the screen drew it from the top.",
+   "code_area": "word/Editor/Paragraph/draw/line-draw-state.js: ParagraphLineDrawState.updateStrikeoutUnderlinePos, updateSlideStrikeoutUnderlinePos; word/Editor/Paragraph.js: drawRunContentLines, CParaDrawingRangeHorizontalLines.BlendSlideUnderlines; word/Editor/Styles.js: CTextPr.GetDecorationMetrics; common/libfont/file.js: GetFontDecorationMetrics; common/libfont/manager.js: CFontFilesCache.LoadFontFile."
   },
   {
    "key": "K5",
@@ -1480,6 +1488,10 @@
     {
      "date": "2026-11-22",
      "note": "Related evidence from the spacing-rules test deck (not fixed): line spacing other than 100% moves the first baseline in PowerPoint, not only lnSpcReduction. 18 pt Calibri, first baseline below the box top (no insets): PowerPoint 16.80-16.85 pt at 100% and 24.41 pt at lnSpc 150% (Euro-Office 16.85 for both); exact lnSpc 20 pt: PowerPoint 15.24, Euro-Office 15.60; 21 pt: PowerPoint 16.20, Euro-Office 16.38. The line pitch itself matches. This deck uses lnSpc 90% on 3 slides and no exact line spacing."
+    },
+    {
+     "date": "2026-11-22",
+     "note": "Another data point, from test deck decoration-rules slide 6 (a wrapped 13.5 pt Calibri paragraph, lnSpc 150%, zero insets): PowerPoint's first baseline is 18.34 pt below the box top, Euro-Office's 12.7 pt (the 100% position), so 5.64 pt or 0.42 em lower; the line pitch (24.24-24.36 pt) matches. With the 18 pt case above (7.6 pt, 0.42 em) this suggests the first line moves down by about 0.42 em at 150%."
     }
    ]
   },

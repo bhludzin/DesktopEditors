@@ -27,6 +27,7 @@ says so. The numbers come from PowerPoint's PDF unless stated otherwise.
 | Superscripts and subscripts (`a:rPr/@baseline`) are drawn at exactly 2/3 of the run size, with no rounding (13.5 → 9 pt, 12.75 → 8.5 pt). The baseline moves by the stated fraction of the run size: `baseline="30000"` raises 18 pt text by 5.4 pt, `-25000` lowers it by 4.5 pt. | [I-010](issues/I-010.md) |
 | A letter followed by a hyphen-minus is not kerned (`T-`, `r-`, `V-`). Pairs with en and em dashes are kerned as usual. | [I-011](issues/I-011.md) |
 | In a box with `wrap="none"`, trailing spaces count in the line width for centred and right-aligned lines, on every line, including one that ends at `<a:br/>`. In a wrapped box they do not count, even when the text fits on one line. | [I-013](issues/I-013.md) |
+| Underlines and strikethroughs are filled bars sized from the face's own metrics, on a 1/600-inch (0.12 pt) grid counted from the text box. The baseline is rounded down to the grid. The underline's top is `post.underlinePosition` below it and the bar is `post.underlineThickness` thick. The strike's top is OS/2 `yStrikeoutPosition` above it and the bar is `yStrikeoutSize` thick. Each value is scaled to the run size and rounded to whole grid steps. So Calibri Bold strikes, and Times New Roman Bold and Arial Bold underlines, are thicker than regular ones. A strike follows its own run (a superscript's at 2/3 size on its raised baseline), and so does a subscript's underline. A superscript's underline stays on the line's baseline at the full run size. Touching underlines on one baseline become one bar: its top and bottom are the runs' width-weighted means, each rounded. `dblStrike` draws two bars of the strike's thickness, directly above and below the single strike's place. | [K4](issues/K4.md) |
 
 ## Not implemented yet
 
@@ -35,11 +36,11 @@ says so. The numbers come from PowerPoint's PDF unless stated otherwise.
 | Rule | Issue |
 |---|---|
 | Glyphs are drawn (not laid out) at 600 dpi: the PDF's font size is the run size rounded to 1/600 inch (13.5 → 13.56, 12.75 → 12.72, 40 → 39.96) and the glyphs inside a word sit at 600-dpi rounded advances. The difference from the 1/576-inch layout is absorbed by the spaces, so word starts follow the layout. Not reproduced: the differences are below 0.06 pt, invisible at the review resolution. | [K2](issues/K2.md) |
-| Underline (and strikeout) position and thickness come from the font's own metrics (`post` and `OS/2`). | [K4](issues/K4.md) |
+| `u="dbl"` and `u="heavy"` underlines (measured once, 24 pt Calibri, in grid steps below the baseline): `dbl` is two bars 10–17 and 29–36 (the single underline is 23–36), and `heavy` is one bar 10–30. Euro-Office draws both as a single underline. The review deck uses neither. | [K4](issues/K4.md) |
 | A line that mixes fonts is only a little taller than a line in its main font: 13.5 pt Calibri with an Arial run is 0.04 pt taller, with its baseline 0.16 pt lower (measured once; the rule is not known yet). | [I-020](issues/I-020.md) |
 | Hebrew letters that combine with a mark into one glyph (bet with dagesh) are drawn with the mark. | [I-021](issues/I-021.md) |
 | Run-level effects (`a:rPr/a:effectLst`, such as `outerShdw`) are drawn: a blurred, offset copy of the text. | [I-015](issues/I-015.md) |
-| With `normAutofit lnSpcReduction`, the first baseline moves up by about 0.21 em at 80% spacing (low confidence). Line spacing other than 100% also moves the first baseline: at `lnSpc` 150% it sits 7.6 pt lower at 18 pt, and exact 20 / 21 pt spacing puts it 0.36 / 0.18 pt higher than Euro-Office does. | [I-017](issues/I-017.md) |
+| With `normAutofit lnSpcReduction`, the first baseline moves up by about 0.21 em at 80% spacing (low confidence). Line spacing other than 100% also moves the first baseline: at `lnSpc` 150% it sits 7.6 pt lower at 18 pt and 5.64 pt lower at 13.5 pt (both about 0.42 em), and exact 20 / 21 pt spacing puts it 0.36 / 0.18 pt higher than Euro-Office does. | [I-017](issues/I-017.md) |
 
 ### Lines, shapes and pictures
 

@@ -72,6 +72,9 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   Euro-Office's PDF had a `cmap` that ran past its end, so Windows drew all PDF text with
   system fonts and a composed bet with dagesh lost its dot. The harness renders with a
   local core build for this (`fidelity.py --core`); mean SSIM 0.9891 (run i021-c).
+  I-014 (39a69b18c4): outer shadows with a blur drawn as PowerPoint draws them, a
+  silhouette blurred with a Gaussian of blurRad / 3 at PowerPoint's image resolution
+  (run i014-c; the 11 slides with such shadows closer, none worse).
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text.

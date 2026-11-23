@@ -91,15 +91,18 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   to what is shown, transparency premultiplied with a matte). Picture edges are no longer
   half transparent, and inside pictures the difference to PowerPoint fell from 1.93 to 0.55
   levels; mean SSIM 0.9925, 97 slides closer and none worse (run k6-c).
-- Open: I-027 (major, found on the 1646-slide deck): PowerPoint's line lengths depart
-  from K2's 1/576-inch layout by font size and from line to line, by up to about 2 per
-  mille. Euro-Office follows the layout exactly, so at 17, 18, 20, 25, 26 and 32 pt words
-  drift by up to 1.6 pt along long lines, and three borderline words wrap differently
-  (slides 15, 906, 1308). It is the main difference left on that deck: mean SSIM 0.9913,
-  and the 93 slides with a line more than 1 pt off average 0.958. Regular 12.75 pt text
-  running about 0.1% long (slide 255) and slide 93's line break (a word within 0.01 pt of
-  the edge) are part of it. Run-level text shadows are still not drawn (I-015; 11 slides
-  of the new deck). Slide 674 differs only in its extracted Hebrew text. Horizontally PowerPoint's PDF still stretches
-  text slightly and draws it a little narrower along a line (I-024, under 0.13 pt).
-  PowerPoint's PDF downsamples pictures drawn above about 270 dpi to 200 dpi (I-025) and
-  draws a flipped tiled picture unmirrored (I-026).
+  I-027 (d90da7a1d0): text drawn in glyph runs on PowerPoint's PDF grid, as its PDF draws it:
+  line starts stretched slightly about the slide's left edge and rounded to 1/3000 inch, and
+  a run that starts just past a grid step drawn one step longer per glyph. Long lines no
+  longer drift by up to 1.6 pt: on the 1646-slide deck lines more than 1 pt off fell from 311
+  to 30 and mean SSIM rose to 0.9929 (run i027-h, 90 slides closer, none worse by more than
+  0.01); on the 838-slide deck 0.9937.
+- Open: I-024 (minor): along a line PowerPoint draws glyphs a little closer together than
+  its layout, by font and size (about 0.25 per mille at 13.5 pt, 0.4 at 18 pt, 1 at 12.75 pt
+  and Calibri Bold 9 pt), the main line-length difference left. I-028 (minor): three
+  borderline words wrap differently on the 1646-slide deck (slides 15, 906, 1308; slide 15
+  is its lowest, SSIM 0.910), and slide 93 of the 838-slide deck looks like the same case.
+  Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674
+  differs only in its extracted Hebrew text. PowerPoint's PDF downsamples pictures drawn
+  above about 270 dpi to 200 dpi (I-025) and draws a flipped tiled picture unmirrored
+  (I-026).

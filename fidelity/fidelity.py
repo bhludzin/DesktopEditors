@@ -225,7 +225,38 @@ def prepare_runtime(work, app, deploy):
     return rt / 'converter', overlaid
 
 
-def render_run(d, label, converter, meta, force=False):
+def pc_font_list(work, app):
+    """The font list x2t renders with, made from this PC's fonts the way the
+    desktop app makes its own at start: AllFonts.js for sdkjs and
+    font_selection.bin for the native side, both in <work>/fonts. The list
+    shipped in the converter was made on the build server, so fonts installed
+    only here (Office's fonts, its cloud fonts such as Aptos) would be
+    substituted in renders although PowerPoint draws them."""
+    out = work / 'fonts'
+    out.mkdir(parents=True, exist_ok=True)
+    # x2t rewrites the list only when the set of font files has changed.
+    extra = [app / 'fonts'] if (app / 'fonts').is_dir() else []
+    run([app / 'converter' / 'x2t.exe', '-create-allfonts', out, *extra], quiet=True, cwd=app / 'converter')
+    for name in ('AllFonts.js', 'font_selection.bin'):
+        if not (out / name).exists():
+            die(f'x2t made no {name} in {out}')
+    return out
+
+
+def font_list_meta(folder, kind):
+    """What run.json records about the font list a run used."""
+    digest = hashlib.sha256()
+    for name in ('AllFonts.js', 'font_selection.bin'):
+        digest.update((folder / name).read_bytes())
+    js = (folder / 'AllFonts.js').read_text(encoding='utf-8-sig')
+    files = re.search(r'__fonts_files"\] = \[(.*?)\];', js, re.S)
+    return {'fonts': kind, 'font_list': str(folder), 'font_list_sha256': digest.hexdigest(),
+            'font_files': len(re.findall(r'"[^"]+"', files.group(1))) if files else None}
+
+
+def render_run(d, label, converter, meta, force=False, font_dir=None):
+    """Render the deck with x2t. font_dir is the folder of the font list to use
+    (see pc_font_list); None uses the list shipped in the converter."""
     out = d / 'runs' / label
     if out.exists():
         if not force:
@@ -235,10 +266,19 @@ def render_run(d, label, converter, meta, force=False):
     tmp.mkdir(parents=True)
     pdf = out / 'deck.pdf'
     params = out / 'x2t-params.xml'
+    if font_dir is None:
+        # x2t looks for font_selection.bin in m_sFontDir and then next to
+        # itself, so this uses the converter's shipped list on both sides.
+        allfonts = converter / 'AllFonts.js'
+        fontdir = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
+        meta.update(font_list_meta(converter, 'shipped'))
+    else:
+        allfonts = font_dir / 'AllFonts.js'
+        fontdir = str(font_dir)
+        meta.update(font_list_meta(font_dir, 'pc'))
     params.write_text(X2T_PARAMS.format(
         src=xml_escape(str(d / 'deck.pptx')), dst=xml_escape(str(pdf)),
-        allfonts=xml_escape(str(converter / 'AllFonts.js')),
-        fontdir=xml_escape(os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')),
+        allfonts=xml_escape(str(allfonts)), fontdir=xml_escape(fontdir),
         tmp=xml_escape(str(tmp))), encoding='utf-8')
     print(f'Rendering {d.name} with {converter}', flush=True)
     started = time.time()
@@ -270,7 +310,8 @@ def cmd_render(args):
         converter = app / 'converter'
         meta = {'kind': 'release', 'app': str(app)}
         label = args.label or 'release-' + app.name.replace('euro-office-', '')
-    render_run(d, label, converter, meta, force=args.force)
+    font_dir = None if args.shipped_fonts else pc_font_list(work, app)
+    render_run(d, label, converter, meta, force=args.force, font_dir=font_dir)
     if not args.sdkjs and baseline_of(d) is None:
         (d / 'baseline.txt').write_text(label, encoding='utf-8')
         print(f'Baseline for {args.name} set to "{label}"')
@@ -322,7 +363,8 @@ def cmd_loop(args):
     converter, overlaid = prepare_runtime(work, app, SDKJS / 'deploy' / 'sdkjs')
     meta = {'kind': 'fork', 'app': str(app), 'sdkjs_commit': commit, 'sdkjs_dirty': dirty,
             'build_mode': mode, 'build_seconds': round(build_seconds, 1), 'overlaid': overlaid}
-    out = render_run(d, label, converter, meta, force=args.force)
+    font_dir = None if args.shipped_fonts else pc_font_list(work, app)
+    out = render_run(d, label, converter, meta, force=args.force, font_dir=font_dir)
     # Record exactly which code produced this run.
     if dirty:
         (out / 'sdkjs-status.txt').write_text(status, encoding='utf-8')
@@ -510,6 +552,10 @@ def cmd_compare(args):
 
 # ---------------------------------------------------------------- CLI
 
+SHIPPED_FONTS_HELP = ('use the font list shipped in the converter (made on the build server) instead of one '
+                      'made from this PC\'s fonts, as runs made before I-023 was fixed did')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     p.add_argument('--work', help='work folder (default: ../fidelity-work next to the repo, or $FIDELITY_WORK)')
@@ -529,6 +575,7 @@ def main():
     s.add_argument('--label', help='name for this run')
     s.add_argument('--app', help='Euro-Office app folder (default: newest under <work>/apps)')
     s.add_argument('--force', action='store_true', help='overwrite a run with the same label')
+    s.add_argument('--shipped-fonts', action='store_true', help=SHIPPED_FONTS_HELP)
     s.set_defaults(func=cmd_render)
 
     s = sub.add_parser('loop', help='build sdkjs from this checkout, render with it, score vs baseline')
@@ -538,6 +585,7 @@ def main():
     s.add_argument('--app', help='Euro-Office app folder (default: newest under <work>/apps)')
     s.add_argument('--force', action='store_true', help='overwrite a run with the same label')
     s.add_argument('--verbose', action='store_true', help='show webpack output')
+    s.add_argument('--shipped-fonts', action='store_true', help=SHIPPED_FONTS_HELP)
     s.set_defaults(func=cmd_loop)
 
     s = sub.add_parser('score', help='(re)score a run and compare it with the baseline')

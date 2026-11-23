@@ -27,6 +27,7 @@ or its renders into the repo.
 fidelity-work/
   apps/euro-office-<version>/   released portable app (never modified)
   runtime/euro-office-<version>/  private converter copy that loads your sdkjs build
+  fonts/                        font list made from this PC's fonts (see Fonts below)
   decks/<name>/
     deck.pptx                   copy of the deck (the original is never touched)
     baseline.txt                the run other runs are compared with
@@ -102,9 +103,16 @@ traced back to the code that produced it.
 - **Hidden slides**: PowerPoint's PDF export may leave them out while x2t
   renders them, which misaligns the slides. The harness warns when the slide
   counts differ.
-- **Fonts**: x2t uses the font index shipped in the app (`converter/AllFonts.js`),
-  which points at `C:\Windows\Fonts`. Check that the fonts your deck uses are on
-  this machine, or PowerPoint and Euro-Office will substitute differently.
+- **Fonts**: renders use a font list made from this PC's fonts, as the desktop
+  app makes its own at start: `x2t -create-allfonts` writes `AllFonts.js` and
+  `font_selection.bin` to `fidelity-work/fonts` (refreshed before every render,
+  rewritten only when the installed fonts change), and x2t is pointed at that
+  folder. It holds what PowerPoint can draw, Office's own fonts and its cloud
+  fonts such as Aptos included. The list shipped in the app's converter was made
+  on the build server and lacks them; `--shipped-fonts` renders with it, as runs
+  made before this change did. `run.json` records which list a run used and its
+  hash. Check that the fonts your deck uses are on this machine, or PowerPoint and
+  Euro-Office will substitute differently.
 - **macOS / Linux**: the scoring parts (`fidelity.py score`, `ssim-compare`,
   `pdftotext`) are cross-platform, but exporting the reference, rendering with
   x2t and rasterizing are Windows-only for now.

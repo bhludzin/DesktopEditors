@@ -62,9 +62,10 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   placed and sized from the font's own metrics, as PowerPoint does. I-017 (38734b3eb3 and
   472ee0b1ae): lines under line spacing other than 100% placed as PowerPoint does. I-016 + I-020
   (a9856eee47): a font's line split at its win ascent and descent, and a line that mixes
-  fonts sized as PowerPoint sizes it. Text lines breaking like
+  fonts sized as PowerPoint sizes it. I-008 (7937b6f01f): outlines with no line join
+  stroked round, as PowerPoint does, with its 31 mitered presets. Text lines breaking like
   PowerPoint rose from 87.1% (release 9.3.8) to 99.97%, slides with identical line breaks
-  from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run i020-c).
+  from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run i008-c).
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text. A composed bet with dagesh loses its dot in the

@@ -68,7 +68,10 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run i008-c). The harness
   renders with a font list made from this PC's fonts (I-023, b3dfc7b), so fonts
   installed only here (Office fonts, Aptos) are no longer substituted in its renders.
+  I-021 (core 2d4497c536, the first fix in the native code): every font embedded in
+  Euro-Office's PDF had a `cmap` that ran past its end, so Windows drew all PDF text with
+  system fonts and a composed bet with dagesh lost its dot. The harness renders with a
+  local core build for this (`fidelity.py --core`); mean SSIM 0.9891 (run i021-c).
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
-  differs only in its extracted Hebrew text. A composed bet with dagesh loses its dot in the
-  PDF (I-021, found while fixing I-006).
+  differs only in its extracted Hebrew text.

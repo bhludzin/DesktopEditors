@@ -65,11 +65,10 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   fonts sized as PowerPoint sizes it. I-008 (7937b6f01f): outlines with no line join
   stroked round, as PowerPoint does, with its 31 mitered presets. Text lines breaking like
   PowerPoint rose from 87.1% (release 9.3.8) to 99.97%, slides with identical line breaks
-  from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run i008-c).
+  from 443 to 784 of 835, and mean SSIM from 0.890 to 0.989 (run i008-c). The harness
+  renders with a font list made from this PC's fonts (I-023, b3dfc7b), so fonts
+  installed only here (Office fonts, Aptos) are no longer substituted in its renders.
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text. A composed bet with dagesh loses its dot in the
-  PDF (I-021, found while fixing I-006). The harness converts with the font list made on
-  Euro-Office's build server, so fonts installed only on this PC (Office fonts, Aptos) are
-  substituted in its renders (I-023, found while fixing I-020; the 838-slide deck is not
-  affected).
+  PDF (I-021, found while fixing I-006).

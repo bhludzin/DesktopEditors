@@ -1719,16 +1719,16 @@
    "id": "I-023",
    "title": "The harness converts with the font list shipped in the app, made on the build server, so fonts installed only on this PC (Office fonts, Aptos) are substituted in its renders",
    "severity": "minor",
-   "status": "open",
-   "fixed_in": null,
+   "status": "fixed",
+   "fixed_in": "DesktopEditors b3dfc7b (fidelity: render with a font list made from this PC's fonts)",
    "categories": [
     "font"
    ],
    "description": "Found while fixing I-020, not by the review. On the mixfont-rules test decks Euro-Office's PDF embeds Trebuchet MS for Century Gothic, Times New Roman for Garamond, Palatino Linotype for Book Antiqua, Arial for Arial Narrow and Franklin Gothic Medium for Franklin Gothic Medium Cond, and Gill Sans MT is substituted too; PowerPoint's PDF embeds each of them. All are installed on this PC (C:\\Windows\\Fonts\\GARA.TTF, GOTHIC.TTF, GIL_____.TTF, BKANT.TTF, ARIALN.TTF, FRAMDCN.TTF), and Aptos, the theme font of the test decks' template, is in Office's cloud-font cache (%LOCALAPPDATA%\\Microsoft\\FontCache\\4\\CloudFonts). The harness gives x2t m_sAllFontsPath = fidelity-work\\runtime\\euro-office-9.3.8\\converter\\AllFonts.js, the list shipped in the portable 9.3.8 package. Its fonts.log shows it was made on the build machine (paths under D:\\a\\DesktopEditors\\DesktopEditors\\core-fonts, a GitHub Actions runner) from that machine's C:\\Windows\\Fonts: 334 font files and none of the Office-installed ones. The desktop app makes its own list at start in %LOCALAPPDATA%\\Euro-Office\\DesktopEditors\\data\\fonts (434 files, with all of the above and Aptos), so the app itself is not affected, only harness renders. The 838-slide deck uses only Calibri, Calibri Light and Times New Roman, which both lists have, so its scores are not affected.",
    "powerpoint": "Draws every font installed on the PC, including Office's cloud fonts (Aptos, the default theme font of new Office presentations).",
-   "euro_office": "In harness renders: substitutes a font missing from the shipped list, with other widths and vertical metrics (Garamond's first baseline at 18 pt sits 0.81 pt lower than PowerPoint's, as Times New Roman's would). In the desktop app: uses its own list, made on this PC.",
-   "suspected_cause": "fidelity.py render_run writes x2t-params.xml with m_sAllFontsPath pointing at the converter's shipped AllFonts.js, which was made on the build server.",
-   "code_area": "DesktopEditors fidelity/fidelity.py: the x2t-params.xml template (m_sAllFontsPath, m_sFontDir) and render_run, which fills it; fidelity-work\\runtime\\euro-office-9.3.8\\converter\\AllFonts.js and font_selection.bin.",
+   "euro_office": "Before the fix, in harness renders: substituted a font missing from the shipped list, with other widths and vertical metrics (Garamond's first baseline at 18 pt sat 0.81 pt lower than PowerPoint's, as Times New Roman's would). The desktop app was never affected: it makes its own list on this PC at start.",
+   "suspected_cause": "Confirmed. x2t gives m_sAllFontsPath to the doctrenderer, where it overrides DoctRenderer.config's allfonts (sdkjs's font list), and the native side (the pptx reader's font picker and the PDF renderer) loads font_selection.bin from m_sFontDir, falling back to x2t's own folder. The harness passed the converter's AllFonts.js and C:\\Windows\\Fonts, which has no font_selection.bin, so both sides used the lists shipped in the converter, made on the build server.",
+   "code_area": "DesktopEditors fidelity/fidelity.py: pc_font_list (runs x2t -create-allfonts), font_list_meta, render_run (m_sAllFontsPath and m_sFontDir in x2t-params.xml) and the --shipped-fonts option of render and loop.",
    "fix_idea": "Point m_sAllFontsPath at the desktop app's list (%LOCALAPPDATA%\\Euro-Office\\DesktopEditors\\data\\fonts\\AllFonts.js, next to its font_selection.bin), or make a list for the runtime from this PC's fonts, and record in run.json which list a run used. Rerender the release baseline and the latest run with it so they stay comparable. Then recheck the font cases of mixfont-rules and mixfont-rules2 (Garamond, Century Gothic, Gill Sans MT, Book Antiqua at 48 pt, Arial Narrow) and the four Aptos boxes of mixfont-rules4.",
    "confidence": "high",
    "findings": [],
@@ -1737,6 +1737,10 @@
     {
      "date": "2026-11-22",
      "note": "Opened while fixing I-020: the boxes in these fonts were the only misses on the mixfont-rules test decks apart from Bahnschrift, and the substitutes in Euro-Office's PDF led to the harness's font list."
+    },
+    {
+     "date": "2026-11-22",
+     "note": "Fixed in the harness (DesktopEditors b3dfc7b). Before each render fidelity.py makes a font list from this PC's fonts with x2t -create-allfonts <work>/fonts <app>/fonts, as the desktop app does at start (x2t rewrites it only when the installed fonts change): 434 font files, the same files as the desktop app's own list, Office's fonts and its cloud fonts (Aptos) included; the shipped list has 334. x2t-params.xml points m_sAllFontsPath and m_sFontDir at it. run.json records the list (fonts pc or shipped, its folder, sha256 and file count); --shipped-fonts renders with the shipped list as before. Rerendered: on the 838-slide deck the release app (run release-9.3.8-pcfonts) and the fork (run i023-pcfonts, sdkjs 7937b6f01f) give the same scores and text as release-9.3.8 and i008-c, so the baseline stays. mixfont-rules (run i023-pcfonts vs i020-c; I-008, the only sdkjs change between them, does not move text): Book Antiqua, Century Gothic, Franklin Gothic Medium Cond, Garamond and Gill Sans MT are now embedded, as in PowerPoint's PDF, and boxes whose baselines are within 0.15 pt of PowerPoint's went from 68 to 72 of 72. mixfont-rules2: Arial Narrow is now embedded (first baseline -0.11 pt); 46 to 47 of 48, the one left being Bahnschrift (+0.72 pt; PowerPoint splits this variable font's line without its typo gap, left as is under I-020). mixfont-rules4: 8 to 12 of 12 (the boxes whose paragraph mark is in Aptos). No other test deck's PowerPoint PDF uses a font the shipped list lacks."
     }
    ]
   }

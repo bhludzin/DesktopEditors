@@ -552,17 +552,28 @@
      "fix_idea": "In ShapeDrawer.drawFillStroke, when isPdf() && bIsTexture && fill.tile == null (stretch) and the fill is opaque, replace the texture fill with SaveGrState(); clip to the geometry path (AddClipRect for IsRectShape/prstGeom rect; otherwise StartClipPath + the path + EndClipPath); Graphics.drawImage(src, texX, texY, texW, texH, alpha, srcRect) using the same texture bounds (fillRect/srcRect) under the current shape transform; RestoreGrState(). Then stroke the outline as before. The PDF then holds 're W n ... cm /Im Do' like PowerPoint's, and the rasterizer snaps the picture to whole pixels. Keep the pattern path only for tiled blips (fill.tile set). To check: re-render slides 37, 408, 467 and 680 and compare column 799, row 425 and row 367."
     }
    ],
-   "suspected_cause": "In PDF/renderer mode, CImageShape.draw sends the blip through ShapeDrawer.drawFillStroke's isPdf() branch as a texture brush (put_brushTexture + put_TextureBounds + drawpath(256), ShapeDrawer.js 2311-2366/2545). The PDF writer emits it as a PatternType 1 tiling pattern whose BBox adds a transparent half-width margin. PowerPoint instead draws a clipped image XObject ('re W n ... cm /Image Do'). Windows.Data.Pdf rasterizes the pattern tile on its own grid and resamples it into the page. The picture content therefore comes out smoother than PowerPoint's directly drawn (pixel-replicated or snapped) image (K6), and the outer row or column blends with the tile's transparent margin (the under-painted edges of pictures-misc/1).",
+   "suspected_cause": "Confirmed: core's PDF writer, not sdkjs. sdkjs sends a picture as a path filled with a texture brush over the picture's rect; CPdfWriter::UpdateBrush turned every texture brush into a tiling pattern, and CPdfWriter::LoadImage encoded every picture as a JPEG at quality 85.",
    "merge_notes": [
     "Tested by rewriting Euro-Office's own PDF (work-merges/pat2img.py). On pages 39 and 106 the '/Pattern cs /P1 scn <rect> f' fill was replaced with a clipped direct draw of the same /X1 image, then rasterized with fidelity/windows/pdf-to-png.ps1. Inside the picture, the mean absolute difference to PowerPoint's render drops from 3.10 to 1.23 levels (p39) and from 4.84 to 1.07 (p106) at 1600 px. On p106 the pixels more than 16 levels off drop from 7.5% to 0.05%, and the max difference from 200 to 23. On the K6 note's border rows on p106, PowerPoint reads 0,0,41,214,214,255; the pattern gives 0,29,42,162,215,243 and the direct draw 0,0,42,215,215,255. The same rewrite also removes the pictures-misc/1 edge defect. p39 column 799 at 800 px: pattern 234, direct 30, PowerPoint 30. p106 bottom row 829 at 1600 px: pattern 210, direct 116, PowerPoint 115. So the one change pictures-misc/1 proposes (drawImage under a clip instead of the texture-brush pattern for stretched, untiled blips) fixes both."
    ],
    "doubts": [
-    "After the direct-draw rewrite a residual of about 1 level remains (max 23). On page 106 Euro-Office embeds the PNG picture (media/image14.png) as DCTDecode (JPEG), while PowerPoint keeps it lossless (FlateDecode, /Interpolate false). That lossy re-encode is probably in core's PDF writer (x2t), not in sdkjs, and is a separate small issue."
+    "After the direct-draw rewrite a residual of about 1 level remains (max 23). On page 106 Euro-Office embeds the PNG picture (media/image14.png) as DCTDecode (JPEG), while PowerPoint keeps it lossless (FlateDecode, /Interpolate false). That lossy re-encode is probably in core's PDF writer (x2t), not in sdkjs, and is a separate small issue.",
+    "Two of the deck's 65 media that PowerPoint keeps at full size do not follow the encoding rule: image54 (29 x 27, 547 colours with alpha: Flate 1721 bytes against JPEG 906) and image34 (116 x 173, 2105 colours: Flate 10265 against JPEG 2855) are lossless in PowerPoint's PDF, and Euro-Office writes them as JPEG. Their slide XML is like the others' (image57, also with a backgroundRemoval effect, is a JPEG in both), and no colour count or size ratio separates them from image44 (2470 colours, Flate 3.5 times the JPEG: a JPEG in both)."
    ],
    "id": "K6",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "core 88cf859ae7 (fix(PdfFile): draw slide pictures as clipped images, encoded like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Measured before coding on the 838-slide deck's 70 media and on a new test deck, picture-rules (make_picture_deck.py: photo, graphic, alpha and JPEG media stretched; icon and 8 x 8 media at 6 x 6, 9 x 4 and 60 x 60 pt; a 1200 x 800 picture at 720 and 360 dpi; crop, rotation, flipH, ellipse, roundRect with an outline, alphaModFix 50% on an opaque and on a transparent picture, a negative srcRect; shape blipFills stretched and tiled; a picture in a scaled group). Rewriting Euro-Office's own PDF (12 pages, each pattern fill replaced by a clipped draw of the same image, or of PowerPoint's image) showed both parts matter: inside the pictures the mean difference to PowerPoint at 800 px went 1.91 (pattern) -> 1.24 (direct draw) -> 0.20 (PowerPoint's image data); /Interpolate makes no difference in Windows.Data.Pdf. Fixed in core 88cf859ae7. picture-rules: every picture now encoded as PowerPoint encodes it (filter, size, mask, matte) except the 1200 x 800 one PowerPoint downsamples (I-025); SSIM 0.9851 -> 0.9878 (slide 1 0.9934 -> 0.9988, slide 2 0.9834 -> 0.9901; slide 3 stays 0.938 for its flipped tile, I-026). shadow-rules 0.9978 -> 0.9981 (its shadows lossless with a matte, as PowerPoint's, within a few bytes). The deck, run k5-c -> k6-c: text and line breaks unchanged, mean SSIM 0.9920 -> 0.9925, 97 slides better and none worse by more than 0.001 (228 +0.051, 788 +0.020, 787 +0.019, 251 +0.015); slide 37's column 799 at 800 px 239 -> 81 (PowerPoint 81), slide 680's row 367 254 -> 177 (177); inside the pictures of the 12 pages the mean difference 1.93 -> 0.55. Of the 652 images paired with PowerPoint's, all now have PowerPoint's mask and matte; still encoded differently: image54 (344 uses) and image34 (2) (see doubts) and image24 (48), which PowerPoint downsamples (I-025). PowerPoint's 161 hidden text-shadow images on slides 186-195 are I-014's."
+    }
+   ],
+   "powerpoint": "Draws each picture as an image XObject clipped to its shape ('q <path> W* n  w 0 0 h x y cm /ImageN Do Q'), one XObject per medium (and per crop) shared by every page that shows it. A cropped picture's image holds only the part shown (srcRect l 10%, t 20%, r 5%, b 15% of a 320 x 200 picture: a 272 x 130 image). Every picture is re-encoded, a JPEG too: lossless (Flate of the RGB, no predictor, /Interpolate false) when it has at most 256 colours or when JPEG would not make it smaller, otherwise JPEG at quality 75 (the Windows codec: entropy data identical to GDI+ at quality 75, plus a 92-byte Exif segment; 4:2:0, /Interpolate true). Transparency (the picture's alpha times alphaModFix) is a soft mask (Flate, DeviceGray, /Matte [0 0 0]) with the colour premultiplied by it. Images drawn on their own (the blurred shadows of I-014) follow the same rule. Tiled picture fills are tiling patterns, one tile per step. Pictures drawn above about 270 dpi are downsampled (I-025).",
+   "euro_office": "Before the fix: painted each picture as a path filled with a tiling pattern (PatternType 1, XStep and YStep twice the picture's size, a transparent margin of half its width and height around the image), which Windows' renderer resampled on the tile's own grid: the picture came out smoother than PowerPoint's and its edge rows and columns partly transparent (slide 37's column 799 at 800 px: 239 against PowerPoint's 81). Every picture that was not a JPEG became a JPEG at quality 85 (IJG tables), a JPEG was passed through and a cropped picture was embedded whole. Now, for slides, drawn and encoded as PowerPoint does, with libjpeg at quality 75 (sizes within about 1% of PowerPoint's).",
+   "code_area": "core PdfFile/PdfWriter.cpp: UpdateBrush calls UpdateSlidePictureBrush (a stretched picture's image and rect, cropped to the path's bounds), which DrawPath draws under a clip to the path before stroking; LoadSlideImage encodes the pictures, and DrawImage uses it for images drawn on their own. Turned on only for presentations: CPdfFile::SetPresentationMode (PdfFile.h/.cpp, CPdfWriter::SetPresentationMode), called by x2t's doct_bin2pdf (X2tConverter/src/lib/pdf_image.h) when the binary is a presentation (PPTT).",
+   "fix_idea": "Done in core, for presentations only (documents and spreadsheets are unchanged): stretched pictures drawn as images clipped to their shape, cropped to what the shape shows, and encoded as PowerPoint encodes them. Tiled fills stay patterns, as in PowerPoint's PDF. Not copied: downsampling above about 270 dpi (I-025) and the Windows JPEG codec (libjpeg at quality 75 instead: the same tables, slightly different rounding).",
+   "confidence": "high"
   },
   {
    "key": "glyphs-fonts/1",
@@ -1792,6 +1803,59 @@
     {
      "date": "2026-11-23",
      "note": "Opened while fixing K5. Line starts on the textscale decks, PowerPoint minus the model (left edge / right edge of the slide): 720x540 -0.008 / +0.100 pt, 960x540 +0.006 / +0.120, 540x720 -0.008 / +0.100, 1440x1080 +0.008 / +0.125 (textscale-960x540/measure_textscale.py). Left as is: at most about 0.13 pt."
+    }
+   ]
+  },
+  {
+   "id": "I-025",
+   "title": "PowerPoint downsamples pictures drawn above about 270 dpi to 200 dpi in its PDF; Euro-Office embeds them at full size",
+   "severity": "trivial",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "picture"
+   ],
+   "description": "Found while fixing K6, not by the review. 10 of the 838-slide deck's 70 media are downsampled in PowerPoint's PDF (99 uses on 22 pages): image53 (451 x 542, 31 uses at 610 dpi) is a 147 x 177 image, image24 (70 x 184, 48 uses at 285 dpi) 49 x 129, image56 (418 x 623 at 975 dpi) 85 x 127. Euro-Office embeds every picture at its full size, so these pictures are sharper than PowerPoint's when the PDF is zoomed in. At the review's 800 px the renderer scales them down to fewer pixels than either image has, so the difference hardly shows there.",
+   "powerpoint": "A medium whose largest use is drawn at more than about 270 dpi (kept at 261, downsampled from 285) is stored at floor(w x 200 / dpi) x floor(h x 200 / dpi), the dpi of that largest use, so 200 dpi there: picture-rules' 1200 x 800 picture, drawn at 720 and 360 dpi, is one 666 x 444 image for both. image60, drawn at 199 to 416 dpi, is kept whole. The resampling filter is not known.",
+   "euro_office": "Embeds every picture at its full size (K6 encodes it as PowerPoint does, but does not resample it).",
+   "suspected_cause": "PowerPoint's PDF export applies a 200-dpi image budget per medium at its largest use; core's PDF writer has no such step.",
+   "code_area": "core PdfFile/PdfWriter.cpp: UpdateSlidePictureBrush and LoadSlideImage (K6). The decision needs every use of a medium, so the image would have to be written (or rewritten) once the document is done, for instance in CPdfWriter's save.",
+   "fix_idea": "Record each slide image's source and the largest size it is drawn at (from the CTM) as pages are written; before saving, re-encode the images whose largest use is above the threshold at 200 dpi there. Pin the threshold (between 261 and 285 dpi) and the filter on a test deck first.",
+   "confidence": "medium",
+   "doubts": [
+    "image64 (1024 x 768, cropped, drawn at about 217 dpi) is downsampled to 274 x 206 in PowerPoint's PDF, below the threshold the other media show; the crop may count differently."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened while fixing K6. Media at more than 180 dpi in the deck (dpi of the largest use -> PowerPoint's image): image41 186, image74 198, image60 199, image69 200, image22 219, image48 220, image20 220, image21 220, image19 220, image37 226, image49 249 and image26 261 kept; image24 285, image23 298, image40 309, image50 313, image70 489, image62 589, image53 611, image61 721 and image56 975 downsampled to floor(w x 200 / dpi) exactly; image64 (217 dpi) downsampled too."
+    }
+   ]
+  },
+  {
+   "id": "I-026",
+   "title": "A tiled picture fill with flip is mirrored in Euro-Office's PDF; PowerPoint's PDF tiles it unmirrored",
+   "severity": "trivial",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "picture"
+   ],
+   "description": "Found while fixing K6 on the picture-rules test deck, not by the review; neither deck tiles a picture. Slide 3 fills a 400 x 260 pt rectangle with a 320 x 200 picture tiled at 100% with flip=\"xy\": Euro-Office's PDF mirrors every other tile across and down, PowerPoint's repeats the same tile (SSIM 0.938 for the slide).",
+   "powerpoint": "Its PDF draws the tiled fill as a tiling pattern of one unmirrored tile (BBox 0 0 320 200, XStep 320, YStep 200, scaled 0.75 to 240 x 150 pt, the picture at 96 dpi), whatever the flip.",
+   "euro_office": "Its PDF draws a tiling pattern of 2 x 2 tiles (480 x 300 pt) with the picture mirrored in the second column and row (core's imagetilepatterntype_InverseXY).",
+   "suspected_cause": "PowerPoint's PDF export ignores a:tile/@flip. Not checked: whether PowerPoint mirrors the tiles on screen, as the format says it should.",
+   "code_area": "core PdfFile/PdfWriter.cpp: UpdateBrush (the tile modes) and SrcWriter/Pattern.cpp: CImageTilePattern.",
+   "fix_idea": "First check PowerPoint's own view (a slide exported as an image) to tell an export quirk from the rule; if its view also ignores the flip, tile without mirroring for slides.",
+   "confidence": "low",
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened while fixing K6 (picture-rules slide 3)."
     }
    ]
   }

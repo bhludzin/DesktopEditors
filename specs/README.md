@@ -80,7 +80,15 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   99.1% of the deck's lines now sit on PowerPoint's baseline, against 12.7% before, and mean
   SSIM rose to 0.9920 (run k5-c). I-018 (the centred title on slides 35 and 36) turned out
   fixed by K2 + K3.
+  K6 (core 88cf859ae7, in the PDF writer): pictures drawn as images clipped to their shape,
+  as PowerPoint draws them, instead of tiling-pattern fills, and encoded as PowerPoint
+  encodes them (lossless when they have few colours, otherwise JPEG at quality 75, cropped
+  to what is shown, transparency premultiplied with a matte). Picture edges are no longer
+  half transparent, and inside pictures the difference to PowerPoint fell from 1.93 to 0.55
+  levels; mean SSIM 0.9925, 97 slides closer and none worse (run k6-c).
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
   differs only in its extracted Hebrew text. Horizontally PowerPoint's PDF still stretches
   text slightly and draws it a little narrower along a line (I-024, under 0.13 pt).
+  PowerPoint's PDF downsamples pictures drawn above about 270 dpi to 200 dpi (I-025) and
+  draws a flipped tiled picture unmirrored (I-026).

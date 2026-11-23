@@ -485,9 +485,20 @@
    "severity": "trivial",
    "tag": "K5",
    "id": "K5",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs f1e24ab652 (fix(slide): place text baselines like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Measured before coding on the 838-slide deck (great-roll/k5_lines.py pairs each line of PowerPoint's PDF with Euro-Office's by its text) and on new test decks: baseline-rules (tIns 0 to 7.77 pt, Calibri 9 to 40 pt and Arial 24 pt, anchors ctr and b with box heights in steps of 0.03 pt, tIns with bIns, spcBef 5 and 7 pt, lnSpc 110% and 93%, exact spacing 17.3 pt, spcAft 3 pt, rotations 90, 180 and 270) and textscale-720x540, -960x540, -540x720 and -1440x1080 (one-line boxes over the whole slide, 20-line boxes). Of the candidates for where the rounding is counted from (the shape's top, the text area after tIns, the top of the anchored text, no rounding), only the top of the text fits every baseline-rules case. The stretch was fitted on the textscale decks; 0.1075 pt fits the 540 pt high slides (the deck's), the 720 and 1080 pt high ones fit about 0.13 pt a little better. Fixed in the presentation editor (sdkjs f1e24ab652). Lines on PowerPoint's baseline (within 0.0055 pt), run i014-c -> k5-d: the deck 12.7% -> 99.1% of 15446 lines, within one 0.024 pt step 60.7% -> 99.97%, the 99th percentile of the error 0.133 -> 0.004 pt. Left: 139 lines one 0.024 pt step off, the two lines of the 96 pt Times New Roman title on slide 1 (0.12 pt) and one 13.1 pt Calibri line on slides 396 and 403 (0.12 pt). baseline-rules 0% -> 65 of 68 (the misses: both Arial 24 pt lines, one 0.12 pt step lower in PowerPoint: their ascent part is 194.475 steps by Arial's win ascent, which rounds to 194, and PowerPoint draws them at 195; and one line 0.022 pt off). textscale-720x540 11% -> 85%, -960x540 12% -> 86%, -540x720 9% -> 39% (91% within a step), -1440x1080 3% -> 62% (97% within a step); the Arial 24 pt boxes miss as above. linespacing-rules: first baselines equal to PowerPoint's 18 -> 49 of 72, linespacing-rules2 14 -> 45 of 72, all within 0.15 pt as before. decoration-rules: underlines and strikes placed relative to their text as PowerPoint places them in 57 cases, 55 before. Harness run k5-d vs i014-c (both with core 2d4497c536): line breaks unchanged (15406 of 15410 lines, 784 of 835 slides identical), mean SSIM 0.9891 -> 0.9920, 121 slides better and 2 worse by more than 0.001 (655 and 397, each a 0.024 pt step that crosses a pixel row in the harness's renderer, Windows.Data.Pdf, which snaps text baselines to whole rows). The editor's canvas draws through the same code (not covered by the harness). Clean run k5-c (sdkjs f1e24ab652): every page's PDF content the same as k5-d on the deck (Windows.Data.Pdf drew slide 618 0.0001 apart) and the same scores on the 10 test decks."
+    }
+   ],
+   "powerpoint": "Puts each line's baseline at a whole number of 1/600 inch (0.12 pt) below the top of the text, halves rounded down. The top of the text is where the first line starts: the text area's top after tIns, moved by the anchoring (ctr, b). The whole distance is rounded, not its parts: the first line's ascent part (Calibri 0.78 x 1.2 x size), space before and line spacing included. Calibri 13.5 pt: 12.636 -> 12.6 pt, 18 pt: 16.848 -> 16.8, 12 pt: 11.232 -> 11.28; the fourth line of 13.5 pt at lnSpc 93%, 472.5 steps down, at 472. The PDF then stretches text positions down by 0.1075 pt over the slide's height about its top edge (depth y is drawn at y x (1 + 0.1075 pt / slide height)) and puts them on a 1/3000-inch (0.024 pt) grid counted from the slide's top. In a rotated box the rounding is in the box's own frame and the stretch and grid in slide coordinates. Horizontally there is a similar stretch, left as I-024.",
+   "euro_office": "Before the fix: drew each line at its exact layout baseline, so lines sat up to 0.18 pt above or below PowerPoint's (0.13 pt at the 99th percentile): 12.7% of the deck's lines were on PowerPoint's baseline and 60.7% within one 0.024 pt step.",
+   "suspected_cause": "Confirmed. PowerPoint keeps baselines on a 1/600-inch grid counted from the top of the text, and its PDF export stretches and snaps text positions; Euro-Office drew the glyphs at the exact layout positions.",
+   "code_area": "sdkjs word/Editor/Paragraph.js: drawRunContentElements calls GetSlideBaselineInfo (the DocContent's top, the text transform, the slide height) and GetSlideLinePos (SLIDE_BASELINE_GRID, SLIDE_TEXT_STRETCH, SLIDE_TEXT_POSITION_GRID).",
+   "fix_idea": "Done in the presentation editor: the glyphs of each line of slide text are drawn at PowerPoint's baseline, rounded from the DocContent's top, then stretched and snapped in slide coordinates. The layout, line breaks, hit testing and the underlines and strikes (K4) are unchanged.",
+   "confidence": "high"
   },
   {
    "key": "K6",
@@ -1527,8 +1538,8 @@
    ],
    "description": "The centred title 'The Beast Will Support The Gathering' is shifted left by about 0.4-0.5 px. It is a title placeholder with normAutofit fontScale=90000, 44 -> 40 pt in both PDFs, and kern=1200 from the master titleStyle. PDF line start: x 55.37 pt in PowerPoint vs 55.00 pt in Euro-Office. Centring on 360 pt implies EO's advance width for the line is about 0.73 pt larger, yet the ink extents measured in the renders have the same width (drift -0.39 left end, -0.17 middle, -0.50 right end). So the extra width is in non-ink advance: the last glyph's advance/side bearing, or a kerning or spacing value counted at the line end. The vertical position matches (80.09 vs 80.07).",
    "powerpoint": "Centres the line so that it starts at x 55.37 pt.",
-   "euro_office": "Starts at x 55.00 pt: the centred width it uses is about 0.73 pt larger than PowerPoint's.",
-   "suspected_cause": "Unclear. Candidates: a kerning pair or an end-of-line advance counted in Range.W (kern=1200 at 40 pt), or K2-type advance differences at 40 pt that cancel inside the line but not in the centring width.",
+   "euro_office": "Before K2 + K3: started at x 55.00 pt (the reviewed run, kern-model-commonjoin-width025); the release started at 54.73. Since K2 + K3 at 55.362, against PowerPoint's 55.368.",
+   "suspected_cause": "Fixed by K2 + K3, which changed both terms of the centring: the text width is no longer reduced by F-003's 0.25 pt + 0.01 mm (a centred line sat half of that, 0.14 pt, left of PowerPoint's) but rounded down to whole 1/576-inch units, and the line's width is summed from PowerPoint's rounded 1/576-inch advances. The doubt that ruled K2 out compared ink widths only and missed the width reduction.",
    "code_area": "Not located. Centring is in word/Editor/Paragraph_Recalculate.js private_RecalculateLineAlign (2043), and the line width comes from ParaRun.Recalculate_Range_Width (word/Editor/Run.js 5233).",
    "fix_idea": "Dump Range.W and the per-glyph advances of this title in EO and compare with the PDF glyph positions of both renderers (TJ arrays) to find where the 0.73 pt comes from before changing anything.",
    "confidence": "low",
@@ -1540,9 +1551,14 @@
     "The issue lists K2-type advance differences as a candidate, but K2 can be excluded: the ink extents have the same width (within 0.11 px) while the centring width differs by about 0.73 pt, so the extra width lies outside the ink (line-start side bearing or trailing advance or kern at the line end). The title has no trailing space and no spc. Per-glyph advance drift would change the ink width."
    ],
    "id": "I-018",
-   "status": "open",
-   "fixed_in": null,
-   "log": []
+   "status": "fixed",
+   "fixed_in": "sdkjs e84bfe4efb (fix(slide): lay slide text out in 1/576-inch units like PowerPoint)",
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Found already fixed while checking it for K5. The title's line start on slide 35 (PDF x, pt), by run: release-9.3.8 54.733, kern-model-commonjoin-width025 (F-001 to F-003, the reviewed run) 55.004, k2-k3-layout576 (sdkjs e84bfe4efb) and every run since 55.362; PowerPoint 55.368. Slide 36 the same. The 0.006 pt left is the horizontal output stretch of I-024. The vertical position (80.07 vs 80.09) is now PowerPoint's to within 0.002 pt (K5)."
+    }
+   ]
   },
   {
    "key": "pictures-misc/3",
@@ -1750,6 +1766,32 @@
     {
      "date": "2026-11-22",
      "note": "Fixed in the harness (DesktopEditors b3dfc7b). Before each render fidelity.py makes a font list from this PC's fonts with x2t -create-allfonts <work>/fonts <app>/fonts, as the desktop app does at start (x2t rewrites it only when the installed fonts change): 434 font files, the same files as the desktop app's own list, Office's fonts and its cloud fonts (Aptos) included; the shipped list has 334. x2t-params.xml points m_sAllFontsPath and m_sFontDir at it. run.json records the list (fonts pc or shipped, its folder, sha256 and file count); --shipped-fonts renders with the shipped list as before. Rerendered: on the 838-slide deck the release app (run release-9.3.8-pcfonts) and the fork (run i023-pcfonts, sdkjs 7937b6f01f) give the same scores and text as release-9.3.8 and i008-c, so the baseline stays. mixfont-rules (run i023-pcfonts vs i020-c; I-008, the only sdkjs change between them, does not move text): Book Antiqua, Century Gothic, Franklin Gothic Medium Cond, Garamond and Gill Sans MT are now embedded, as in PowerPoint's PDF, and boxes whose baselines are within 0.15 pt of PowerPoint's went from 68 to 72 of 72. mixfont-rules2: Arial Narrow is now embedded (first baseline -0.11 pt); 46 to 47 of 48, the one left being Bahnschrift (+0.72 pt; PowerPoint splits this variable font's line without its typo gap, left as is under I-020). mixfont-rules4: 8 to 12 of 12 (the boxes whose paragraph mark is in Aptos). No other test deck's PowerPoint PDF uses a font the shipped list lacks."
+    }
+   ]
+  },
+  {
+   "id": "I-024",
+   "title": "Text is drawn about 0.02 pt per 100 pt wider along a line than PowerPoint draws it, and PowerPoint's PDF stretches line starts by about 0.12 pt over the slide's width",
+   "severity": "trivial",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-position",
+    "text-glyph-spacing"
+   ],
+   "description": "Found while fixing K5, not by the review: K5 puts lines where PowerPoint draws them vertically, and the same line pairs show what is left horizontally. On the 838-slide deck (15446 lines paired by text) PowerPoint's line starts are on average 0.025 pt right of Euro-Office's (sd 0.05 pt). On the textscale test decks (one-line, left-aligned boxes with zero insets over the whole slide) PowerPoint's line starts are stretched about the slide's left edge by 0.116 pt over a 720 pt width, 0.125 over 960, 0.112 over 540 and 0.128 over 1440, like the vertical 0.1075 pt stretch K5 copies. Within a line PowerPoint's glyphs are closer together than Euro-Office's by about 0.00019 x their distance from the line start (0.02 pt over 100 pt), which K2's 1/576-inch layout does not account for. At the review's resolution all of this is under 0.1 px.",
+   "powerpoint": "Draws a line's start about (0.12 pt / slide width) x its distance from the slide's left edge further right than its layout position, and the glyphs in the line about 0.02% closer together than the 1/576-inch layout (K2) puts them. The glyphs are drawn at 600-dpi rounded advances (see K2).",
+   "euro_office": "Draws each line from its layout start and its glyphs at their layout advances, with no stretch horizontally (K5 stretches vertically).",
+   "suspected_cause": "PowerPoint's PDF export scales text positions slightly about the slide's top-left corner, horizontally as vertically, and draws glyphs at advances a little narrower than its layout's.",
+   "code_area": "sdkjs word/Editor/Paragraph.js: GetSlideLinePos (K5) can move a line's start; the glyphs within a line are placed by ParaRun.prototype.Draw_Elements (word/Editor/Run.js).",
+   "fix_idea": "Fit the horizontal stretch per slide width on the textscale decks and the compression within lines per font and size on the deck before changing anything. Then stretch x in GetSlideLinePos as y is stretched, and scale glyph offsets within the line if the compression turns out to be one factor.",
+   "confidence": "low",
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened while fixing K5. Line starts on the textscale decks, PowerPoint minus the model (left edge / right edge of the slide): 720x540 -0.008 / +0.100 pt, 960x540 +0.006 / +0.120, 540x720 -0.008 / +0.100, 1440x1080 +0.008 / +0.125 (textscale-960x540/measure_textscale.py). Left as is: at most about 0.13 pt."
     }
    ]
   }

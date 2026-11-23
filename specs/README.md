@@ -44,7 +44,7 @@ turned up while fixing them; **F-001…** were fixed before the review.
 
 Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
 
-## Where things stand (2026-11-22)
+## Where things stand (2026-11-23)
 
 - Fixed: F-001 kerning, F-002 script itemization and F-003 line width (sdkjs 7898a3e982),
   I-001 fractional font sizes (414ae64bd0), I-007 default outline width 0.75 pt (7e6a447d83),
@@ -75,6 +75,12 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   I-014 (39a69b18c4): outer shadows with a blur drawn as PowerPoint draws them, a
   silhouette blurred with a Gaussian of blurRad / 3 at PowerPoint's image resolution
   (run i014-c; the 11 slides with such shadows closer, none worse).
+  K5 (f1e24ab652): each line's baseline placed as PowerPoint places it, a whole number of
+  1/600 inch below the top of the text, with its PDF's slight stretch and 1/3000-inch grid;
+  99.1% of the deck's lines now sit on PowerPoint's baseline, against 12.7% before, and mean
+  SSIM rose to 0.9920 (run k5-c). I-018 (the centred title on slides 35 and 36) turned out
+  fixed by K2 + K3.
 - Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
   (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
-  differs only in its extracted Hebrew text.
+  differs only in its extracted Hebrew text. Horizontally PowerPoint's PDF still stretches
+  text slightly and draws it a little narrower along a line (I-024, under 0.13 pt).

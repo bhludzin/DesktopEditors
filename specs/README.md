@@ -10,6 +10,10 @@ connectors, groups, pictures) as rendered by PowerPoint (its own PDF export, the
 and by Euro-Office. The deck is not in the repo. The harness keeps it, the renders and the
 slide images in a private work folder (`../fidelity-work`).
 
+After K6 a later, 1646-slide version of the deck (377 slides the same, 75 with changed
+text, 1194 new) was compared slide by slide in the same way. Its results are in
+[results.md](results.md), and what it added is in I-027 and in the logs of K2 and I-015.
+
 ## Contents
 
 | File | What it is |
@@ -25,8 +29,9 @@ slide images in a private work folder (`../fidelity-work`).
 | [workflows/](workflows/) | The Claude Code workflow scripts that ran the slide review and the root-cause grouping |
 
 Issue ids: **K1–K6** were known before the full review (from a pilot) and kept their ids;
-**I-001…I-019** were found by the review, numbered by severity and reach; **I-020** onwards
-turned up while fixing them; **F-001…** were fixed before the review.
+**I-001…I-019** were found by the review, numbered by severity and reach; **I-020…I-026**
+turned up while fixing them; **I-027** onwards came from the 1646-slide deck; **F-001…** were
+fixed before the review.
 
 ## Working through an issue
 
@@ -86,9 +91,15 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   to what is shown, transparency premultiplied with a matte). Picture edges are no longer
   half transparent, and inside pictures the difference to PowerPoint fell from 1.93 to 0.55
   levels; mean SSIM 0.9925, 97 slides closer and none worse (run k6-c).
-- Open: no major issues are left. Regular 12.75 pt text still runs about 0.1% long
-  (slide 255). Slide 93 still breaks one line differently (a K2 residual under 0.01 pt), and 674
-  differs only in its extracted Hebrew text. Horizontally PowerPoint's PDF still stretches
+- Open: I-027 (major, found on the 1646-slide deck): PowerPoint's line lengths depart
+  from K2's 1/576-inch layout by font size and from line to line, by up to about 2 per
+  mille. Euro-Office follows the layout exactly, so at 17, 18, 20, 25, 26 and 32 pt words
+  drift by up to 1.6 pt along long lines, and three borderline words wrap differently
+  (slides 15, 906, 1308). It is the main difference left on that deck: mean SSIM 0.9913,
+  and the 93 slides with a line more than 1 pt off average 0.958. Regular 12.75 pt text
+  running about 0.1% long (slide 255) and slide 93's line break (a word within 0.01 pt of
+  the edge) are part of it. Run-level text shadows are still not drawn (I-015; 11 slides
+  of the new deck). Slide 674 differs only in its extracted Hebrew text. Horizontally PowerPoint's PDF still stretches
   text slightly and draws it a little narrower along a line (I-024, under 0.13 pt).
   PowerPoint's PDF downsamples pictures drawn above about 270 dpi to 200 dpi (I-025) and
   draws a flipped tiled picture unmirrored (I-026).

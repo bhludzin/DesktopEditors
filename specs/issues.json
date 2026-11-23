@@ -357,6 +357,10 @@
     {
      "date": "2026-11-22",
      "note": "The four slides that still broke some lines differently after K2 and K3: 116 lacked a break after an en dash (I-022), and 510 and 525 had superscripts drawn too small (I-010). All three now match PowerPoint. On 93 Euro-Office keeps 'like' at the end of a line where PowerPoint wraps it. In Euro-Office's layout that line ends less than 0.01 pt inside the text width, and at PowerPoint's own drawn positions it would fit too. So this is K2's residual, not a separate rule, and it is left as is."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "The 1646-slide deck has much more text at other sizes (6342 long lines at 18 pt, and 17, 20, 25, 26 and 32 pt) and shows that PowerPoint's line lengths depart from this model by size and from line to line, by up to about 2 per mille; Euro-Office follows the model exactly. Opened as I-027."
     }
    ]
   },
@@ -1460,7 +1464,12 @@
    "id": "I-015",
    "status": "open",
    "fixed_in": null,
-   "log": []
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "The 1646-slide deck has run-level outer shadows on 11 new slides (552-561 and 720). PowerPoint draws them, a dark blurred copy under the text, and Euro-Office does not: slide 557's quote box has 5611 changed pixels of PowerPoint-only ink against 2141 of Euro-Office-only (800 px)."
+    }
+   ]
   },
   {
    "key": "vertical/8",
@@ -1856,6 +1865,37 @@
     {
      "date": "2026-11-23",
      "note": "Opened while fixing K6 (picture-rules slide 3)."
+    }
+   ]
+  },
+  {
+   "id": "I-027",
+   "title": "PowerPoint's line lengths depart from K2's 1/576-inch layout by font size and from line to line (up to about 2 per mille: 17, 18, 20, 25, 26 and 32 pt, 12.75 pt, 9 and 12 pt bold); Euro-Office follows the layout exactly, so words drift by up to 1.6 pt along long lines and borderline words wrap differently",
+   "severity": "major",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-glyph-spacing",
+    "text-wrap"
+   ],
+   "description": "Found by the slide-by-slide comparison of the 1646-slide deck (a later version of the 838-slide deck: 377 slides the same, 75 with changed text, 1194 new), run k6-c. Every one of the 28138 lines paired by text between the two PDFs sits on PowerPoint's baseline (all within 0.124 pt, 28121 within 0.03 pt) and starts where PowerPoint's starts (within 0.33 pt), but the lengths differ: of the 16766 paired lines at least 300 pt long, 1238 differ by more than 0.5 pt and 312 by more than 1 pt (308 of them shorter in Euro-Office). At the review's 800 px a 1 to 1.6 pt drift moves the second half of a line by 1 to 2 px, and this is the main difference left on the deck: the 93 slides with a line more than 1 pt off average SSIM 0.958 (15 0.815, 39 0.829, 1283 0.855, 35 0.855, 38 0.863, 1371 0.901, 1487 0.906, 551 0.913, 1590 0.914), and the 525 slides whose lines all match within 0.3 pt average 0.997. Of the 120 slides under 0.98, 96 have a line more than 0.6 pt off and the rest 0.4 to 0.6 pt. It also changes three line breaks: on slides 15 (18 pt, 'again.'), 906 (13.5 pt, 'like') and 1308 (13.5 pt, 'I') Euro-Office keeps the word on a line that ends 0.14, 0.06 and 0.04 pt inside the text area, and PowerPoint wraps it. The 838-slide deck is mostly 13.5 pt text, where PowerPoint keeps to the layout on 82% of long lines, so its review saw only the edge of this (slide 255's 12.75 pt text about 0.1% long, slide 93's 'like').",
+   "powerpoint": "Measured against K2's model (each glyph's advance rounded to whole 1/576 inch at 8 x N units per em, pair kerning added unrounded) on the deck's lines of at least 300 pt: PowerPoint's line length minus the model's, per mille of the length, median (share of lines). Calibri 13.5 pt -0.19 (83% within 0.5); 18 pt -0.45 (49% within 0.5, 41% shorter by more than 0.5); 17 pt +0.77 (39% longer by more than 1.5); 20 pt +1.78 (67% longer by more than 1.5); 25 pt +1.65; 26 pt +2.34 (75% longer by more than 1.5); 32 pt +1.30; 12.75 pt -0.92 (69% shorter by more than 0.5); 10.5 pt +0.29 (86% within 0.5); Calibri Bold 9 pt -1.12 (97% shorter by more than 0.5); 12 pt -1.14; 30 pt -0.29 (91% within 0.5); 40 pt -0.32. The excess differs from line to line within one run: slide 1283's quote box is one 13.5 pt run, and most of its lines are 1.2 to 2.0 pt longer than the model while five are within 0.15 pt. Along a line the excess builds up evenly, not at one glyph. On slide 39's 17 pt lines each glyph advances 0.03 to 0.06 pt more than the model and each space 0.21 to 0.28 pt less. The PDF's font size is the run size on a 600-dpi step (17 -> Tf 17.04, 20 -> 20.04, 26 -> 26.04, 32 -> 32.04, 13.5 -> 13.56, 12.75 -> 12.72, 25 -> 24.96, 40 -> 39.96), on some lines one 0.024 pt step higher (17.064, 18.024, 13.584). The rule behind the lengths is not known yet.",
+   "euro_office": "Lays out text at every size with K2's model, and its line lengths match the model to within 0.1 per mille (median) at each of the sizes above, so it differs from PowerPoint by PowerPoint's own departure from the model. Draws the text at the run size (Tf 17, 20, 26), not at PowerPoint's 600-dpi step.",
+   "suspected_cause": "K2's model was fitted on the 838-slide deck's word starts, mostly 13.5 pt and 18 pt text, and holds on average there; it does not describe PowerPoint's layout at other sizes, nor its variation between lines. Ruled out: GDI's hinted advances (Calibri's hinted advances at 108, 136, 144, 160 and 208 ppem equal its rounded linear advances, but for one glyph at 208); laying out at PowerPoint's 600-dpi size (8 x Tf units per em, worse at 17 pt); laying out autofit text at its unscaled size and scaling it (20, 25 and 26 pt are autofit text, 17 and 18 pt are not, and both kinds depart). Scaling the model's advances by Tf / N fits 20 pt (slide 2: mean residual -0.08 pt) and 32 pt, but not 17 pt, 25 pt or 9 pt bold.",
+   "code_area": "sdkjs word/Editor/Paragraph/TextShaper.js: CParagraphTextShaper.prototype.private_GetLayoutWidth and private_GetLayoutFontSize (K2's 1/576-inch advances, slides only).",
+   "fix_idea": "Find the rule on a test deck first: a few long left-aligned paragraphs in Calibri and Calibri Bold at every quarter point from 9 to 40 pt (and some Arial and Times New Roman), each paragraph repeated so that the variation between lines shows, exported to PDF by PowerPoint. Fit per size what K2 fits (advance grid, units per em, rounding of kerning and spaces), and test whether a line's excess follows its content (spaces, glyph count, the glyphs' 600-dpi rounding) or its place in the box. Then change private_GetLayoutWidth for the sizes the rule covers and check the deck's drift tables (linecmp.py, linestats.py, k2lines.py) and its line breaks on both decks.",
+   "confidence": "low",
+   "doubts": [
+    "The excess varies between lines of one run (slide 1283), so a rule by size alone will not remove all of it.",
+    "Lines that mix runs of different fonts or weights (slides 776 and 1112) are not paired by linecmp.py and are left out of the counts; on the sheets they drift the same way.",
+    "15 pt and 13 pt Calibri lines depart from the model by about +3 per mille in both PDFs alike, so the model misses something on those slides (character spacing?); they are not counted as differences here."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 1646-slide deck's comparison (run k6-c: sdkjs f1e24ab652, core 88cf859ae7; mean SSIM 0.9913, 27892 of 27906 lines breaking as in PowerPoint, 1535 of 1596 slides with identical breaks). Scripts in the work folder's decks/great-roll-1646: linecmp.py pairs the lines of the two PDFs (baseline, start and end differences; review/linecmp-k6-c.json), linestats.py groups them by size, k2lines.py measures each line against K2's model in both PDFs (review/k2lines-new.txt), k2fit.py tries layout sizes, k2glyphclass.py splits a line's excess into glyphs and spaces, and wordcmp.py shows where along a line it builds up. The 838-slide deck's run k6-c gives the same picture at the sizes both decks have (Calibri 13.5 pt 82% within 0.5 per mille, 18 pt 49%, 12.75 pt -0.86, Bold 9 pt -1.12)."
     }
    ]
   }

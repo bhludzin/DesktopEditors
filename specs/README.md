@@ -97,12 +97,15 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   longer drift by up to 1.6 pt: on the 1646-slide deck lines more than 1 pt off fell from 311
   to 30 and mean SSIM rose to 0.9929 (run i027-h, 90 slides closer, none worse by more than
   0.01); on the 838-slide deck 0.9937.
-- Open: I-024 (minor, parked): along a line PowerPoint draws glyphs a little closer together
-  than its layout, by font and size (about 0.25 per mille at 13.5 pt, 0.4 at 18 pt, 1 at
-  12.75 pt and Calibri Bold 9 pt), the main line-length difference left; it comes from how
-  PowerPoint's PDF writer encodes glyph positions, whose exact rule is not known. I-028 (minor): three
+  I-024 (f53e0a4a15): each glyph drawn where PowerPoint's 600-dpi device and PDF writer put
+  it (whole-pixel advances held near the layout, word starts on the nearest pixel, and the
+  writer's adjustments made only once they reach 3 units of 1/1000 em, so lines come out a
+  little shorter than their layout, by font and size). Glyphs within 0.03 pt of PowerPoint's
+  rose from 20% to 84%; mean SSIM 0.9978 on both decks (run i024-c: 237 slides closer on the
+  1646-slide deck, 66 on the 838-slide deck, none worse by more than 0.006).
+- Open: I-028 (minor): three
   borderline words wrap differently on the 1646-slide deck (slides 15, 906, 1308; slide 15
-  is its lowest, SSIM 0.910), and slide 93 of the 838-slide deck looks like the same case.
+  is its lowest, SSIM 0.938), and slide 93 of the 838-slide deck looks like the same case.
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674
   differs only in its extracted Hebrew text. PowerPoint's PDF downsamples pictures drawn
   above about 270 dpi to 200 dpi (I-025) and draws a flipped tiled picture unmirrored

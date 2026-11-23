@@ -191,10 +191,13 @@ X2T_PARAMS = """<?xml version="1.0" encoding="utf-8"?>
 """
 
 
-def prepare_runtime(work, app, deploy):
+def prepare_runtime(work, app, deploy, core=None):
     """A private copy of the release converter whose editors/sdkjs bundles are
-    replaced by the fork's build. The release app itself is never modified."""
-    rt = work / 'runtime' / app.name
+    replaced by the fork's build, and with core, whose x2t and libraries are
+    replaced by a native core build (its package bin folder); that copy is a
+    separate one, so runs without core keep the release's native code. The
+    release app itself is never modified."""
+    rt = work / 'runtime' / (app.name + ('-core' if core else ''))
     marker = rt / '.copied'
     if not marker.exists():
         if rt.exists():
@@ -203,20 +206,29 @@ def prepare_runtime(work, app, deploy):
         for part in ('converter', 'editors/sdkjs', 'editors/web-apps/vendor/xregexp', 'dictionaries'):
             shutil.copytree(app / part, rt / part)
         marker.write_text(str(app), encoding='utf-8')
+    native_changed = False
+    if core:
+        for src in sorted(core.iterdir()):
+            if src.is_file() and src.suffix.lower() in ('.dll', '.exe'):
+                dst = rt / 'converter' / src.name
+                if not dst.exists() or not filecmp.cmp(src, dst, shallow=False):
+                    shutil.copy2(src, dst)
+                    native_changed = True
     overlaid = []
     for editor in EDITORS:
         src_dir = deploy / editor
         if not all((src_dir / b).exists() for b in BUNDLES):
             continue
         dst_dir = rt / 'editors' / 'sdkjs' / editor
-        changed = False
+        changed = native_changed
         for bundle in BUNDLES:
             src, dst = src_dir / bundle, dst_dir / bundle
             if not dst.exists() or not filecmp.cmp(src, dst, shallow=False):
                 shutil.copy2(src, dst)
                 changed = True
         if changed:
-            # Compiled-code caches belong to the old bundle; x2t writes a new one.
+            # Compiled-code caches belong to the old bundle (or the old native
+            # code's V8); x2t writes a new one.
             for stale in list(dst_dir.glob('*.cache')) + list(dst_dir.glob('*.bin')):
                 stale.unlink()
         overlaid.append(editor)
@@ -241,6 +253,21 @@ def pc_font_list(work, app):
         if not (out / name).exists():
             die(f'x2t made no {name} in {out}')
     return out
+
+
+def core_meta(core):
+    """What run.json records about a native core build a run used: its folder,
+    a hash of its x2t and libraries, and the commit in core-commit.txt if the
+    folder has one."""
+    if not core:
+        return {}
+    digest = hashlib.sha256()
+    files = sorted(f for f in core.iterdir() if f.is_file() and f.suffix.lower() in ('.dll', '.exe'))
+    for f in files:
+        digest.update(f.name.encode('utf-8') + b'\0' + f.read_bytes())
+    note = core / 'core-commit.txt'
+    return {'core': str(core), 'core_files': len(files), 'core_sha256': digest.hexdigest(),
+            'core_commit': note.read_text(encoding='utf-8').strip() if note.exists() else None}
 
 
 def font_list_meta(folder, kind):
@@ -302,9 +329,13 @@ def cmd_render(args):
     d = deck_dir(args)
     work = work_dir(args)
     app = Path(args.app).resolve() if args.app else default_app(work)
+    core = Path(args.core).resolve() if args.core else None
+    if core and not args.sdkjs:
+        die('--core needs --sdkjs: the release app itself is never modified')
     if args.sdkjs:
-        converter, overlaid = prepare_runtime(work, app, Path(args.sdkjs).resolve())
+        converter, overlaid = prepare_runtime(work, app, Path(args.sdkjs).resolve(), core)
         meta = {'kind': 'fork', 'app': str(app), 'sdkjs_deploy': str(Path(args.sdkjs).resolve()), 'overlaid': overlaid}
+        meta.update(core_meta(core))
         label = args.label or datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     else:
         converter = app / 'converter'
@@ -360,9 +391,11 @@ def cmd_loop(args):
     dirty = bool(status.strip())
     label = args.label or '{}-{}{}'.format(datetime.datetime.now().strftime('%Y%m%d-%H%M'),
                                            commit[:7], '-dirty' if dirty else '')
-    converter, overlaid = prepare_runtime(work, app, SDKJS / 'deploy' / 'sdkjs')
+    core = Path(args.core).resolve() if args.core else None
+    converter, overlaid = prepare_runtime(work, app, SDKJS / 'deploy' / 'sdkjs', core)
     meta = {'kind': 'fork', 'app': str(app), 'sdkjs_commit': commit, 'sdkjs_dirty': dirty,
             'build_mode': mode, 'build_seconds': round(build_seconds, 1), 'overlaid': overlaid}
+    meta.update(core_meta(core))
     font_dir = None if args.shipped_fonts else pc_font_list(work, app)
     out = render_run(d, label, converter, meta, force=args.force, font_dir=font_dir)
     # Record exactly which code produced this run.
@@ -554,6 +587,8 @@ def cmd_compare(args):
 
 SHIPPED_FONTS_HELP = ('use the font list shipped in the converter (made on the build server) instead of one '
                       'made from this PC\'s fonts, as runs made before I-023 was fixed did')
+CORE_HELP = ('a native core build\'s folder of x2t and libraries (its package bin folder) to render with '
+             'instead of the release\'s; a core-commit.txt in it is recorded in run.json')
 
 
 def main():
@@ -576,6 +611,7 @@ def main():
     s.add_argument('--app', help='Euro-Office app folder (default: newest under <work>/apps)')
     s.add_argument('--force', action='store_true', help='overwrite a run with the same label')
     s.add_argument('--shipped-fonts', action='store_true', help=SHIPPED_FONTS_HELP)
+    s.add_argument('--core', help=CORE_HELP)
     s.set_defaults(func=cmd_render)
 
     s = sub.add_parser('loop', help='build sdkjs from this checkout, render with it, score vs baseline')
@@ -586,6 +622,7 @@ def main():
     s.add_argument('--force', action='store_true', help='overwrite a run with the same label')
     s.add_argument('--verbose', action='store_true', help='show webpack output')
     s.add_argument('--shipped-fonts', action='store_true', help=SHIPPED_FONTS_HELP)
+    s.add_argument('--core', help=CORE_HELP)
     s.set_defaults(func=cmd_loop)
 
     s = sub.add_parser('score', help='(re)score a run and compare it with the baseline')

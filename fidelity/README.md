@@ -85,6 +85,7 @@ python fidelity/fidelity.py runs my-deck               # every run with its head
 python fidelity/fidelity.py baseline my-deck <label>   # compare future runs with <label>
 python fidelity/fidelity.py score my-deck <label>      # rescore one run
 python fidelity/fidelity.py render my-deck --sdkjs <deploy dir>   # render any built sdkjs
+python fidelity/fidelity.py render my-deck --sdkjs <deploy dir> --core <core bin dir>   # and a native core build
 ```
 
 Each run records the sdkjs commit it was built from, and when the checkout has
@@ -113,6 +114,16 @@ traced back to the code that produced it.
   made before this change did. `run.json` records which list a run used and its
   hash. Check that the fonts your deck uses are on this machine, or PowerPoint and
   Euro-Office will substitute differently.
+- **Native code**: renders use the release's x2t and libraries unless `render` or
+  `loop` is given `--core <folder>`, a native core build's folder of x2t and DLLs
+  (its `package/bin`). Its `.dll` and `.exe` files are copied over a separate
+  runtime copy (`runtime/<app>-core`), so runs without `--core` keep the release's
+  native code. `run.json` records the folder, a hash of its files and the note in
+  its `core-commit.txt`, if it has one. Build core the way the release does: x64
+  Release with the shared C runtime (`-DCMAKE_POLICY_DEFAULT_CMP0091=NEW`; core's
+  own top-level CMake otherwise links every DLL with its own static runtime, and
+  that x2t crashes). Built that way, the release's core commit renders the same
+  scores and text as the release.
 - **macOS / Linux**: the scoring parts (`fidelity.py score`, `ssim-compare`,
   `pdftotext`) are cross-platform, but exporting the reference, rendering with
   x2t and rasterizing are Windows-only for now.

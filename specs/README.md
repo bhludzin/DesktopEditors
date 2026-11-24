@@ -118,6 +118,10 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   I-029 (d18576da6a): glyphs of a colour font (Segoe UI Emoji) drawn in their colours, as their
   COLR layers in palette 0, where they were black outlines; the knife emoji on 11 slides of
   the 3963-slide deck now matches PowerPoint's, and nothing else changes.
+  I-030 (429072eb3f): pictures' colour change, brightness/contrast and duotone applied as
+  PowerPoint does (colour changes first, on the original pixels, then the rest in order); the
+  5 slides of the 3963-slide deck that use them now match PowerPoint's pictures, and nothing
+  else changes.
 - Open: I-028 (trivial): line breaks within 0.005 pt of the edge (slides 15, 1308, 1564 of the
   1646-slide deck, 806 of the 838-slide deck, 962 and 3185 of the 3963-slide deck).
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674

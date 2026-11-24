@@ -2017,20 +2017,21 @@
    "id": "I-030",
    "title": "Picture colour effects (clrChange, duotone, lum) ignored",
    "severity": "major",
-   "status": "open",
-   "fixed_in": null,
+   "status": "fixed",
+   "fixed_in": "sdkjs 429072eb3f (fix(slide): apply picture colour change, brightness/contrast and duotone)",
    "categories": [
     "picture"
    ],
    "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Blip effects inside a:blip are parsed but not applied when drawing. 1484: clrChange makes white (and red ED1C24) transparent; Euro-Office keeps them, so the map's white background covers the top of the caption. 1046/1047: clrChange black-to-transparent plus a red duotone; Euro-Office shows black squares around the moons and the moon is not red. 2902 and 2906: a:lum contrast 20000 / 10000; PowerPoint's pictures have visibly higher contrast (measured 1.10-1.26x stretch on 2906). Slides (5): 1046-1047, 1484, 2902, 2906.",
-   "powerpoint": "Applies the colour change (transparent key colour), duotone recolouring and luminance/contrast to the picture before drawing it.",
-   "euro_office": "Draws the original picture unchanged (only alphaModFix transparency is honoured).",
-   "suspected_cause": "CBlipFill.Effects holds CClrChange / CDuotone / CLumEffect objects, but the drawing path only consumes CAlphaModFix (CBlipFill.getTransparent); no pixel transform is done for the others.",
-   "code_area": "sdkjs/common/Drawings/Format/Format.js (CBlipFill, CClrChange ~4623, CDuotone ~4697, CLumEffect ~5006); picture drawing in the shape drawer / native graphics",
-   "fix_idea": "Apply the blip effects to the decoded image before it is drawn or written to the PDF: clrChange as a colour-key alpha mask (with PowerPoint's tolerance), duotone as a luminance map between the two colours, lum as bright/contrast on each channel.",
+   "powerpoint": "Bakes the effects into the picture's pixels. Every clrChange comes first and is matched against the original pixels, wherever it stands in the blip: a pixel within 1 of clrFrom in each channel takes clrTo's colour and alpha (clrTo with alpha 0 makes it transparent; 50% gives alpha 128). Then lum and duotone apply in the order the blip lists them. lum maps each channel v (0 to 1) to floor(255 x clip(k x (v - 1/2) + 1/2 + bright x (1 + k) / 2)), with k = 1 / (1 - contrast) for a positive contrast and 1 + contrast otherwise, so brightness alone adds and contrast alone pivots about mid-grey. duotone takes g = floor(0.2126 R + 0.7152 G + 0.0722 B) of the sRGB values and gives round(c1 + (c2 - c1) x g / 255) per channel; its colours are worked out with their modifiers as for any colour (tint in linear light, satMod in HSL without capping the saturation: FF0000 tint 45% satMod 400% is (255, 107, 107)). The moon on 1046: black made transparent, then a black-to-light-red duotone, then lum bright 14% contrast 52%, so grey 128 becomes (183, 29, 29). The PDF holds the result as the picture's image, with a soft mask where it is transparent, encoded by K6's rule. Measured on the test deck blipfx-rules (lum sweeps, duotones, colour keys and orders on lossless ramps, exact to the level).",
+   "euro_office": "Before the fix: drew the original picture (only alphaModFix was honoured). Now, in slides, a picture or picture fill whose blip has clrChange, lum or duotone is drawn from a copy with PowerPoint's rules applied: the PDF path decodes the media file in x2t, applies the effects and passes the result to the writer as a PNG; the canvas path does the same from the loaded image. Results are cached per picture and effects. On the test deck every lossless image equals PowerPoint's to the level, and the JPEG ones differ by compression noise only.",
+   "suspected_cause": "Cause found: CBlipFill.Effects holds CClrChange, CDuotone and CLumEffect, but drawing only used CAlphaModFix (CBlipFill.getTransparent); nothing transformed the pixels, and picture brushes never worked out the effects' colours.",
+   "code_area": "sdkjs common/Drawings/Format/GraphicObjectBase.js: getSlideBlipEffectsImage (getSlideBlipColorEffects resolves the colours from the shape's theme, slide, layout and master; applySlideBlipColorEffects; getSlideBlipSourcePixels reads the media file with native GetImagesPath / GetFileBinary and CZipEmbed decodeImage, or the loaded image on canvas). word/Drawing/ShapeDrawer.js: getBlipTextureSrc (PDF brush texture, stretched and tiled) and getBlipCanvas (canvas). Presentation editor only; SVG, EMF and WMF pictures are left alone.",
+   "fix_idea": "Done (see euro_office). Not done: clrChange's useA (alpha is not compared), the other blip effects (grayscl, biLevel, clrRepl, hsl, tint, alphaMod and the rest), and PowerPoint's downsampling of large pictures (I-025).",
    "confidence": "high",
    "doubts": [
-    "The exact colour-key tolerance PowerPoint uses for clrChange was not measured."
+    "The canvas path (the editor's screen view and thumbnails) uses the same pixel code but is not covered by the harness, which scores the PDF; a picture the browser will not let a canvas read keeps its original pixels.",
+    "A semi-transparent pixel that matches clrChange gets its alpha multiplied by clrTo's; only opaque pixels were measured."
    ],
    "findings": [],
    "representative": [],
@@ -2038,6 +2039,14 @@
     {
      "date": "2026-11-23",
      "note": "Opened from the 3963-slide deck's review (provisional id N-02; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "Measured with the test deck blipfx-rules (fidelity-work/decks/blipfx-rules: make_blipfx_deck.py, cases.json; lum sweeps, duotones with preset, scheme and modified colours, colour keys with alpha, and effect orders on lossless 256 x 4 ramps): the rules in powerpoint, exact on every lossless image. The clrChange tolerance is 1 level per channel."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "Fixed in sdkjs 429072eb3f. Runs i030-a vs i029-a: on the 3963-slide deck exactly the 5 slides with these effects change, all closer to PowerPoint (SSIM 1046 0.929 -> 0.952, 1047 0.968 -> 0.998, 1484 0.963 -> 0.995, 2902 0.988 -> 0.993, 2906 0.991 -> 0.999; mean 0.99678 -> 0.99681). Mean difference from PowerPoint's images, of 255 levels: the moon with all three effects 48.7 -> 3.4 (alpha 84.6 -> 0), the map on 1484 134.9 -> 0.8, the icons on 1484 up to 206.6 -> 0 to 6.7 (several are downsampled by PowerPoint, I-025), the contrast pictures on 2902 9.9 -> 1.9 and on 2906 17.8 -> 1.1 and 7.6 -> 0.7; what is left is JPEG noise. The 838-slide deck is unchanged (every page and the extracted text the same as i029-a); so is the 1646-slide deck. Before/after: decks/great-roll-3963/review/i030/before-after-i030a.png (PowerPoint, i029-a, i030-a on 1046, 1484, 2906). What is left on 1046 lies outside the effect pictures (not investigated)."
     }
    ]
   },

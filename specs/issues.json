@@ -1983,21 +1983,22 @@
    "id": "I-029",
    "title": "Colour emoji drawn as a monochrome outline glyph",
    "severity": "major",
-   "status": "open",
-   "fixed_in": null,
+   "status": "fixed",
+   "fixed_in": "sdkjs d18576da6a (fix(slide): draw colour-font glyphs in their COLR colours)",
    "categories": [
     "font",
     "text-color-effects"
    ],
    "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). A knife emoji (U+1F52A) at the end of a 14-pt line is drawn by Euro-Office as the black outline glyph of Segoe UI Emoji. PowerPoint writes it as a 96x81 colour bitmap (brown handle, grey blade). The position and size match; the colour and shape do not. Slides (11): 734-736, 751-758.",
-   "powerpoint": "Colour emoji bitmap placed in the text line.",
-   "euro_office": "Monochrome Segoe UI Emoji outline glyph in the text colour.",
-   "suspected_cause": "The native text renderer and PDF writer draw only the outline (glyf) layer of a COLR/CPAL colour font; the colour layers are ignored.",
-   "code_area": "DesktopEditors/core/DesktopEditor/fontengine (glyph rendering) and core/PdfFile/PdfWriter.cpp (text output)",
-   "fix_idea": "For glyphs from a COLR font, draw each colour layer as a filled glyph in its CPAL colour, or rasterise the emoji to an image the way PowerPoint does.",
+   "powerpoint": "Draws a colour emoji in its colours. Its PDF holds each one as an image, not text: the knife at 14 pt is a 96 x 81 RGB image at about 200 dpi (34.6 x 29.5 pt, glyph plus transparent margin, Flate with an SMask) placed where the glyph goes in the line.",
+   "euro_office": "Before the fix: drew the glyph as Segoe UI Emoji's single outline, filled with the text colour (black). Now, in slides, a glyph whose font has COLR (version 0 records) and CPAL tables is drawn as its COLR layers, bottom to top, each layer glyph filled with its colour from palette 0 (palette index 0xFFFF takes the text colour; palette alpha is multiplied by the text alpha), and the text colour is restored afterwards. The code points go with the first layer only, so the emoji is extracted once. The layers are vector glyphs, so the PDF keeps the emoji as text and it stays sharp at any zoom, where PowerPoint's is a 200-dpi image. At 4000 px the knife's outline, brown handle with its rivets and grey blade match PowerPoint's to about a pixel of its image.",
+   "suspected_cause": "Cause found: nothing in sdkjs or core reads COLR or CPAL. The font engine and the PDF writer draw every glyph as one outline in the current brush colour.",
+   "code_area": "sdkjs common/libfont/grapheme.js: DrawGrapheme uses GetColorGlyphDrawer / CColorGlyphDrawer when the grapheme's font has a colour table (ReadColorGlyphTable parses COLR v0 and CPAL palette 0 from the font bytes, AscFonts.getFontStream; cached per font file and face). Presentation editor only, and only on AscCommon.CDocumentRenderer (PDF, with a solid brush) and AscCommon.CGraphics (canvas), whose brush colour can be read back and restored; other contexts draw the outline as before.",
+   "fix_idea": "Done (see euro_office). Not done: drawing an image as PowerPoint does; COLR version 1 paint graphs (gradients, as in Windows 11's Segoe UI Emoji, whose version 0 records are used instead); palettes other than 0; bitmap colour fonts (sbix, CBDT).",
    "confidence": "high",
    "doubts": [
-    "Small (one glyph per slide), but the colour is wrong, so it is ranked major. The native renderer path for colour fonts was not traced."
+    "Small (one glyph per slide), but the colour was wrong, so it was ranked major.",
+    "The canvas path (the editor's screen view and thumbnails) uses the same layer drawing but is not covered by the harness, which scores the PDF."
    ],
    "findings": [],
    "representative": [],
@@ -2005,6 +2006,10 @@
     {
      "date": "2026-11-23",
      "note": "Opened from the 3963-slide deck's review (provisional id N-01; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "Fixed in sdkjs d18576da6a (merged into main as 11cde6909d). Runs i029-a vs i031-b: on the 3963-slide deck exactly the 11 emoji slides change (734-736, 751-758; mean absolute difference from PowerPoint in the knife's box 21.1 -> 17.0 of 255; SSIM changes by at most 0.0001 since it is computed on grey levels); extracted text identical. The 838-slide deck is unchanged; on the 1646-slide deck one pixel of slide 195 differs with byte-identical page content (rasteriser noise). Crops: decks/great-roll-3963/review/i029/crop734-i029a.png (800 px) and hires734-i029a.png (4000 px)."
     }
    ]
   },

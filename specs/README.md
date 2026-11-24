@@ -115,6 +115,9 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   I-031 (c845723170): slide text widths rounded, not cut, so lines are measured exactly as
   K2 has them; 471 and 2822 and I-028's lines on 93 and 906 now break like PowerPoint. What is
   left of I-028 is 6 slides within 0.005 pt of the edge, 3 each way (now trivial).
+  I-029 (d18576da6a): glyphs of a colour font (Segoe UI Emoji) drawn in their colours, as their
+  COLR layers in palette 0, where they were black outlines; the knife emoji on 11 slides of
+  the 3963-slide deck now matches PowerPoint's, and nothing else changes.
 - Open: I-028 (trivial): line breaks within 0.005 pt of the edge (slides 15, 1308, 1564 of the
   1646-slide deck, 806 of the 838-slide deck, 962 and 3185 of the 3963-slide deck).
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674

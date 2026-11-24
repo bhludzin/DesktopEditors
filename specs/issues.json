@@ -2388,6 +2388,67 @@
      "note": "Opened from the 3963-slide deck's review (provisional id N-13; decks/great-roll-3963/review/new-issues.json and triage.json)."
     }
    ]
+  },
+  {
+   "id": "I-042",
+   "title": "The desktop editor could not open any presentation: drawing the master and layout thumbnails threw in K5's baseline code (a regression since K5)",
+   "severity": "major",
+   "status": "fixed",
+   "fixed_in": "sdkjs 8195b5db0b (fix(slide): open presentations in the desktop editor again)",
+   "categories": [
+    "other"
+   ],
+   "description": "Found in the desktop app, not by the review or the harness; not a rendering difference but a blocker. Every GUI bundle built from sdkjs f1e24ab652 (K5) to 12b5e8c974 failed to open every deck, a 6-slide one included: after x2t converted the file, the editor showed \"An error has occurred while opening the file. Press \"OK\" to close the editor.\", and the console had TypeError: this.Parent.Get_ParentTextTransform is not a function. The stock 9.3.8 release opens the same decks. The PDF harness could not catch it: x2t never draws those thumbnails.",
+   "powerpoint": "Opens the deck (not a rendering difference).",
+   "euro_office": "Before the fix: the editor showed the open error for every presentation. Now it opens them: a copy of the 3963-slide deck (great-roll-3963) opens in the GUI in 79-106 s, slides 154, 931, 3335 and 3963 render, edits and Save work, and the saved file reopens with the edits.",
+   "suspected_cause": "Cause found: since K5 (sdkjs f1e24ab652) every slide text draw calls Paragraph.GetSlideBaselineInfo, which walks up through CDocumentContent.Get_ParentTextTransform. While a presentation opens, CPresentation.GenerateThumbnails draws the master and layout thumbnails with CMasterThumbnailDrawer, whose \"Aa\" sample is a CDocumentContent parented to the CPresentation, and CPresentation has no Get_ParentTextTransform, so the draw threw.",
+   "code_area": "sdkjs word/Editor/DocumentContent.js CDocumentContent.Get_ParentTextTransform (now calls the parent's only when it has one); called from word/Editor/Paragraph.js Paragraph.GetSlideBaselineInfo (K5); the thumbnails are drawn by slide/Editor/Format/Presentation.js CPresentation.GenerateThumbnails with slide/Editor/Format/SlideMaster.js CMasterThumbnailDrawer.",
+   "fix_idea": "Done (see euro_office).",
+   "confidence": "high",
+   "doubts": [
+    "Harness gap: nothing in the harness exercises the GUI open path (x2t never draws the master and layout thumbnails), so a change that breaks only the editor goes unseen; this fix was checked by hand.",
+    "Save As was not checked (it needs the native file dialog)."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-24",
+     "note": "Opened: every GUI bundle from sdkjs f1e24ab652 to 12b5e8c974 failed to open any deck, a 6-slide one included (\"An error has occurred while opening the file\"; console: this.Parent.Get_ParentTextTransform is not a function); the stock 9.3.8 release opens them."
+    },
+    {
+     "date": "2026-11-24",
+     "note": "Fixed in sdkjs 8195b5db0b (merged into main as 0bc2dbc3e6): CDocumentContent.Get_ParentTextTransform calls the parent's method only when it exists. x2t's PDFs are unchanged (byte-identical apart from timestamps on baseline-rules, decoration-rules, picture-rules and great-roll). Checked in the GUI app euro-office-9.3.8-text-fix, driven over CDP (--ascdesktop-support-debug-info opens a DevTools port, 8080), on a copy of the 3963-slide deck (great-roll-3963): it opens in 79-106 s, slides 154, 931, 3335 and 3963 render, edits and Save (74 s) work, and the saved file reopens with the edits. Save As not checked (it needs the native dialog). The save drops the deck's picture corrections, as the release's does (I-043)."
+    }
+   ]
+  },
+  {
+   "id": "I-043",
+   "title": "Saving a presentation drops its picture corrections (a14:imgProps, with their a14:imgLayer .wdp images)",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "picture"
+   ],
+   "description": "Found while checking I-042's fix, not by the review; not a rendering difference. A copy of the 3963-slide deck (great-roll-3963) saved from the desktop app loses all 774 of its a14:imgProps / a14:imgLayer picture corrections and the 234 .wdp files they point to; every PNG and JPEG picture is kept. The stock 9.3.8 release does the same (upstream behaviour, not a regression).",
+   "powerpoint": "Writes a picture's corrections as a14:imgProps in the blip's extension list, with the original image as an a14:imgLayer (.wdp), so they can be changed or reset later; the blip itself is the corrected image.",
+   "euro_office": "Keeps the blip, the already-corrected image, so the slides should look the same after a save, but writes no a14:imgProps and none of the .wdp files, so PowerPoint can no longer change or reset those corrections.",
+   "suspected_cause": "Not traced. Neither core nor sdkjs reads a14:imgProps or a14:imgLayer: core reads a blip's extLst into PPTX::Logic::Ext, which keeps only svgBlip.",
+   "code_area": "core OOXML/PPTXFormat/Logic/Fills/Blip.cpp (a blip's a:extLst) and OOXML/PPTXFormat/Logic/ExtP.cpp (PPTX::Logic::Ext, which reads and writes only svgBlip).",
+   "fix_idea": "Carry a14:imgProps and its .wdp parts through open and save, written back unchanged while the picture's image is not replaced.",
+   "confidence": "medium",
+   "doubts": [
+    "Not yet checked in PowerPoint: that the saved file looks the same there, and that its corrections can no longer be changed or reset."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-24",
+     "note": "Opened while checking I-042's fix: a copy of the 3963-slide deck saved from the GUI app (euro-office-9.3.8-text-fix) has none of the original's 774 a14:imgProps / a14:imgLayer and 234 .wdp files; all PNG and JPEG media are kept. The stock 9.3.8 release does the same."
+    }
+   ]
   }
  ],
  "rejected": [

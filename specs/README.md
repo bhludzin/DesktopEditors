@@ -134,11 +134,15 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   text had no parent text transform; x2t never draws those thumbnails, so the harness (which
   does not exercise the GUI) did not see it, and its PDFs are unchanged. Checked in the GUI on
   the 3963-slide deck: it opens, edits, saves and reopens.
+  I-043 (55d8aba01b and core 0b9efbcab3): saving keeps the pictures' a14:imgProps corrections
+  and their .wdp images (and any other blip extension but svgBlip) while a picture keeps its
+  image, so PowerPoint can still change or reset them; replacing the picture drops them. The
+  release drops them all. Checked in the GUI on the 3963-slide deck: its 387 corrections and
+  234 .wdp files come back byte-identical, and PowerPoint shows the same corrections; x2t's
+  PDFs are unchanged.
 - Open: I-028 (trivial): line breaks within 0.005 pt of the edge (slides 15, 1308, 1564 of the
   1646-slide deck, 806 of the 838-slide deck, 962 and 3185 of the 3963-slide deck).
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674
   differs only in its extracted Hebrew text. PowerPoint's PDF downsamples pictures drawn
   above about 270 dpi to 200 dpi (I-025) and draws a flipped tiled picture unmirrored
-  (I-026). Saving a presentation drops its pictures' a14:imgProps corrections and their .wdp
-  images, as the release does (I-043, minor; the pictures should look the same, but PowerPoint
-  can no longer change or reset the corrections).
+  (I-026).

@@ -2124,20 +2124,21 @@
    "id": "I-033",
    "title": "An opening quote followed by spaces cannot end a line",
    "severity": "major",
-   "status": "open",
-   "fixed_in": null,
+   "status": "fixed",
+   "fixed_in": "sdkjs 12b5e8c974 (fix(slide): break at the spaces after an opening mark)",
    "categories": [
     "text-wrap"
    ],
    "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). A paragraph has a left double quote (U+201C) directly before spaces. PowerPoint ends a line with it (the line ends \"slavery.“\"). Euro-Office treats U+201C as CANT_BE_AT_END and glues the following space to it, so the quote moves to the next line and all later lines reflow (PowerPoint 21 lines, Euro-Office 22; SSIM 0.755). Slides (1): 154.",
-   "powerpoint": "Quote stays at the end of the line; the spaces after it are the break opportunity.",
-   "euro_office": "Quote and following word move to the next line; the rest of the paragraph reflows.",
-   "suspected_cause": "g_aPunctuation[0x201C] has CANT_BE_AT_END, and Run.js keeps a para_Space after such an item instead of breaking there.",
-   "code_area": "sdkjs/common/commonDefines.js:2340 (g_aPunctuation); sdkjs/word/Editor/Run.js ~4148",
-   "fix_idea": "Allow a break at a space that follows a CANT_BE_AT_END quote (PowerPoint's rule applies only when the quote is directly attached to the next word), at least in presentations.",
+   "powerpoint": "Breaks at the spaces after an opening mark like at any other space, so the mark can end a line: measured for the left quotes (U+201C, U+2018), ( [ { $ GBP and Yen signs, and the East Asian and full-width brackets and signs Word keeps off a line's end (U+3008, U+300C, U+300E, U+3010, U+301D, U+FF08, U+FF04), alone or after a word ('slavery.' + U+201C), followed by one or two spaces. A mark attached to the next word ('(camp', U+201C + 'army', '$100') stays with it, as before. Measured on the test deck openpunct-rules (48 wrapped boxes of 13.5 pt Calibri, kern 1200; slide 5 holds the attached controls).",
+   "euro_office": "Before the fix: a space after such a mark was added to the word (Run.js, para_Space), so the mark and the spaces moved to the next line with the following word. Now, in slides, the space is a break opportunity after any such mark; a non-breaking space before the space keeps the old rule (not measured). On the test deck all 48 boxes break like PowerPoint (15 before; slide 5's controls were already right).",
+   "suspected_cause": "Cause found: ParaRun.Recalculate_Range glued a para_Space to the word when the item before it could not end a line (g_aPunctuation CANT_BE_AT_END: Word's rule).",
+   "code_area": "sdkjs word/Editor/Run.js ParaRun.Recalculate_Range, case para_Space (slides: Para.IsSlideText()).",
+   "fix_idea": "Done (see euro_office). Word documents keep the old rule.",
    "confidence": "high",
    "doubts": [
-    "One occurrence; the rule for other opening punctuation followed by spaces was not tested."
+    "Measured in Latin text only; a space after an opening bracket inside Japanese or Chinese text was not tested.",
+    "A non-breaking space followed by a space still glues (not measured)."
    ],
    "findings": [],
    "representative": [],
@@ -2145,6 +2146,14 @@
     {
      "date": "2026-11-23",
      "note": "Opened from the 3963-slide deck's review (provisional id N-05; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    },
+    {
+     "date": "2026-11-24",
+     "note": "Measured with the test deck openpunct-rules (fidelity-work/decks/openpunct-rules: make_openpunct_deck.py, cases.json, check_openpunct.py; boxes compared with dash-super-rules/measure_dash_super.py <deck> <run> break): PowerPoint ends a line with a spaced opening mark of every kind tested; run i033-pre broke like PowerPoint in 15 of 48 boxes (only the attached controls)."
+    },
+    {
+     "date": "2026-11-24",
+     "note": "Fixed in sdkjs 12b5e8c974. Runs i033-a vs i032-a: on the 3963-slide deck only page 154 changes in the PDF, now breaking like PowerPoint (lines matching 10/21 -> 21/21, SSIM 0.755 -> 0.996; identical slides 3799 -> 3800, lines 64183 -> 64194 of 64239; mean SSIM 0.99688 -> 0.99694); the 838-slide and 1646-slide decks are unchanged (every page and the extracted text the same). Test deck: 48 of 48 boxes break like PowerPoint. Before/after: decks/great-roll-3963/review/i033/before-after-i033a.png (PowerPoint, i032-a, i033-a)."
     }
    ]
   },
@@ -2345,6 +2354,10 @@
     {
      "date": "2026-11-23",
      "note": "Opened from the 3963-slide deck's review (provisional id N-12; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    },
+    {
+     "date": "2026-11-24",
+     "note": "The test deck openpunct-rules shows the same: East Asian brackets in en-US runs of Calibri are drawn by PowerPoint in MS Gothic and by Euro-Office in SimSun, at the same positions; pdftotext then splits the SimSun glyphs onto lines of their own, so the harness's line score for slides 2 and 6 is low although the breaks match."
     }
    ]
   },

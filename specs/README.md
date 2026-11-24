@@ -126,6 +126,9 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   turned or foreshortened, text included), and square-on pictures lit as PowerPoint lights them;
   the two mirrored pictures of the 3963-slide deck (931, 1046) now match PowerPoint's, and
   nothing else changes.
+  I-033 (12b5e8c974): a line may break at the spaces after an opening mark (`“`, `(`, `$` and the
+  like), so the mark can end a line, as in PowerPoint; slide 154 of the 3963-slide deck now
+  breaks like PowerPoint, and nothing else changes.
 - Open: I-028 (trivial): line breaks within 0.005 pt of the edge (slides 15, 1308, 1564 of the
   1646-slide deck, 806 of the 838-slide deck, 962 and 3185 of the 3963-slide deck).
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674

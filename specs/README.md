@@ -122,6 +122,10 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   PowerPoint does (colour changes first, on the original pixels, then the rest in order); the
   5 slides of the 3963-slide deck that use them now match PowerPoint's pictures, and nothing
   else changes.
+  I-032 (1587814993): flat shapes and pictures drawn as their scene3d camera sees them (mirrored,
+  turned or foreshortened, text included), and square-on pictures lit as PowerPoint lights them;
+  the two mirrored pictures of the 3963-slide deck (931, 1046) now match PowerPoint's, and
+  nothing else changes.
 - Open: I-028 (trivial): line breaks within 0.005 pt of the edge (slides 15, 1308, 1564 of the
   1646-slide deck, 806 of the 838-slide deck, 962 and 3185 of the 3963-slide deck).
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674

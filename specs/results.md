@@ -44,6 +44,7 @@ read it together with the line metrics.
 | i031-b | c845723170 | 100.0% | 784/835 | 0.9978 | + I-031 (slide text keeps its item widths rounded to 1/16384 mm, not cut, so lines are measured as K2 has them; I-024's half-pixel test allows 0.01 px); slide 93 now breaks like PowerPoint (I-028's line, 0.0012 pt over) and 806 does not (a line 0.0024 pt over that PowerPoint keeps, I-028); the other slides' mean SSIM 0.99782 -> 0.99785, 0 worse by more than 0.0015 |
 | i029-a | d18576da6a | 100.0% | 784/835 | 0.9978 | + I-029 (slide glyphs of a colour font drawn as their COLR layers in palette 0 colours); no colour-font glyphs in this deck: every page the same as i031-b; text unchanged |
 | i030-a | 429072eb3f | 100.0% | 784/835 | 0.9978 | + I-030 (picture clrChange, lum and duotone applied with PowerPoint's rules, slides only); no such effects in this deck: every page and the text the same as i029-a |
+| i032-a | 1587814993 | 100.0% | 784/835 | 0.9978 | + I-032 (flat objects drawn as their scene3d camera sees them: mirrored, turned or foreshortened, text included; square-on pictures lit as PowerPoint lights them; slides only); no scene3d in this deck: every page and the text the same as i030-a |
 
 ## The 1646-slide deck
 
@@ -60,6 +61,7 @@ I-027's log for the scripts).
 | i031-b | c845723170 | 99.95% | 1535/1596 | 0.9978 | + I-031, as in the 838-slide deck's i031-b; 906 now breaks like PowerPoint and 1564 does not (the 838-slide deck's 93 and 806); the other slides 0.99779 -> 0.99781; glyphs within 0.03 pt of PowerPoint's (slides 100 to 400) 83.5% -> 83.9% |
 | i029-a | d18576da6a | 99.95% | 1535/1596 | 0.9978 | + I-029, as in the 838-slide deck's i029-a; no colour-font glyphs: every page's PDF content the same as i031-b (Windows.Data.Pdf drew one pixel of slide 195 differently); text unchanged |
 | i030-a | 429072eb3f | 99.95% | 1535/1596 | 0.9978 | + I-030, as in the 838-slide deck's i030-a; no such effects: every page and the text the same as i029-a |
+| i032-a | 1587814993 | 99.95% | 1535/1596 | 0.9978 | + I-032, as in the 838-slide deck's i032-a; no scene3d: every page and the text the same as i030-a |
 
 ## The 3963-slide deck
 
@@ -75,3 +77,4 @@ Reviewed slide by slide after I-024.
 | i031-b | c845723170 | 99.9% | 3799/3839 | 0.9968 | + I-031, as in the 838-slide deck's i031-b; 471 and 2822 now break like PowerPoint (SSIM 0.975 -> 0.997, 0.949 -> 0.999) and 962 does not (0.999 -> 0.977, a line 0.0029 pt over that PowerPoint keeps, I-028); the other slides 0.996775 -> 0.996786 |
 | i029-a | d18576da6a | 99.9% | 3799/3839 | 0.9968 | + I-029, as in the 838-slide deck's i029-a; exactly the 11 slides with the knife emoji change (734-736, 751-758), drawn with PowerPoint's outline, brown handle and grey blade (in the knife's box the mean difference from PowerPoint 21.1 -> 17.0 levels; SSIM, computed on grey levels, moves by at most 0.0001); text unchanged |
 | i030-a | 429072eb3f | 99.9% | 3799/3839 | 0.9968 | + I-030, as in the 838-slide deck's i030-a; exactly the 5 slides with these effects change, all closer to PowerPoint (SSIM 1046 0.929 -> 0.952, 1047 0.968 -> 0.998, 1484 0.963 -> 0.995, 2902 0.988 -> 0.993, 2906 0.991 -> 0.999): the moons lose their black squares and the second turns red, the map and icons on 1484 lose their white and red backgrounds; text unchanged |
+| i032-a | 1587814993 | 99.9% | 3799/3839 | 0.9969 | + I-032, as in the 838-slide deck's i032-a; only 931 and 1046 change, their pictures now mirrored and lit like PowerPoint's (SSIM 931 0.747 -> 0.986, 1046 0.952 -> 0.993); text unchanged |

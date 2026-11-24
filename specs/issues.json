@@ -1468,6 +1468,10 @@
     {
      "date": "2026-11-23",
      "note": "The 1646-slide deck has run-level outer shadows on 11 new slides (552-561 and 720). PowerPoint draws them, a dark blurred copy under the text, and Euro-Office does not: slide 557's quote box has 5611 changed pixels of PowerPoint-only ink against 2141 of Euro-Office-only (800 px)."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "The 3963-slide deck: slides 1051, 1052 and 1057 have text shadows that are not drawn (run i024-c review)."
     }
    ]
   },
@@ -1604,7 +1608,12 @@
    "id": "I-019",
    "status": "open",
    "fixed_in": null,
-   "log": []
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "The 3963-slide deck: 50 slides, ellipses and arcs up to 0.41 pt off on 414 pt circles, sub-pixel (kappa about 0.5486 against PowerPoint's 0.5523); slide 1372 curvedUpArrow (run i024-c review)."
+    }
+   ]
   },
   {
    "id": "F-001",
@@ -1864,6 +1873,10 @@
     {
      "date": "2026-11-23",
      "note": "Opened while fixing K6. Media at more than 180 dpi in the deck (dpi of the largest use -> PowerPoint's image): image41 186, image74 198, image60 199, image69 200, image22 219, image48 220, image20 220, image21 220, image19 220, image37 226, image49 249 and image26 261 kept; image24 285, image23 298, image40 309, image50 313, image70 489, image62 589, image53 611, image61 721 and image56 975 downsampled to floor(w x 200 / dpi) exactly; image64 (217 dpi) downsampled too."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "The 3963-slide deck: 51 slides whose pictures PowerPoint downsamples; not visible at 800 px (run i024-c review)."
     }
    ]
   },
@@ -1935,19 +1948,19 @@
   },
   {
    "id": "I-028",
-   "title": "Three line breaks differ on the 1646-slide deck: Euro-Office keeps a word on a line that fits by 0.04 to 0.14 pt, PowerPoint wraps it",
-   "severity": "minor",
+   "title": "Line breaks within 0.005 pt of the edge go both ways: PowerPoint wraps some lines that fit by K2 and keeps some that are over",
+   "severity": "trivial",
    "status": "open",
    "fixed_in": null,
    "categories": [
     "text-wrap"
    ],
-   "description": "Found by the 1646-slide deck's comparison (run k6-c, unchanged by I-027 in run i027-h). On slides 15 (Calibri 18 pt, 'again.'), 906 (13.5 pt, 'like') and 1308 (13.5 pt, 'I') Euro-Office keeps the word on a line that ends 0.14, 0.06 and 0.04 pt inside the text area, and PowerPoint moves it to the next line, so the lines below differ too (slide 15 SSIM 0.910, the deck's lowest; 906 0.985; 1308 0.978). Slide 93 of the 838-slide deck ('like', a word within 0.01 pt of the edge, SSIM 0.981) looks like the same case. The 1646-slide deck's other lines that break differently (slides 279, 280 and 349) are text extraction only: PowerPoint's PDF maps the Hebrew marks to text in another order, and the glyphs are drawn the same.",
-   "powerpoint": "Moves the word to the next line, although by K2's model the line fits with 0.04 to 0.14 pt to spare.",
-   "euro_office": "Keeps the word on the line: by K2's model, which Euro-Office lays out with, it fits.",
-   "suspected_cause": "Not known. PowerPoint's line breaking may measure the line a little wider than K2's model (another rounding of the advances or of the kerning, the trailing space or punctuation counted), or keep a small margin. I-027's extra cells are drawing only and do not explain it: the deck's other long lines break as K2's model does.",
+   "description": "Found by the 1646-slide deck's comparison (run k6-c). With K2's widths computed exactly (I-031), PowerPoint's line breaks follow the edge test everywhere except within 0.005 pt of the edge, where they go both ways. Wrapped though they fit: slide 15 of the 1646-slide deck (Calibri 18 pt, 'again.', by 0.0029 pt; SSIM 0.910 before I-024, 0.938 after), 1308 (13.5 pt, 'I', 0.0022) and 3185 of the 3963-slide deck (18 pt, 'Russian', 0.0049). Kept though over: 806 of the 838-slide deck and 1564 of the 1646-slide deck (the same line, 13.5 pt, by 0.0024 pt) and 962 of the 3963-slide deck (18 pt, 0.0029). Wrapped at only 0.0012 pt over: 93 and 906 (one line). The other slides the first comparison put here (906 and 93) were I-031. Slides 279, 280 and 349 of the 1646-slide deck are text extraction only: PowerPoint's PDF maps the Hebrew marks to text in another order, and the glyphs are drawn the same.",
+   "powerpoint": "Within 0.005 pt of the edge, wraps or keeps a word in a way no rule tried explains (see the log). Outside that band it follows K2's widths computed exactly.",
+   "euro_office": "Follows K2's widths exactly (I-031), so it gets these 6 slides wrong, 3 each way.",
+   "suspected_cause": "PowerPoint's own arithmetic: some rounding or accumulation in its line measure below 0.005 pt that is not K2's.",
    "code_area": "sdkjs word/Editor/Paragraph/TextShaper.js: CParagraphTextShaper.prototype.private_GetLayoutWidth (K2's widths); word/Editor/Run.js: ParaRun.prototype.Recalculate_Range (line breaking).",
-   "fix_idea": "Measure each case first (the text area's width, the line's width by K2 with and without the trailing space and kerning). Then build a test deck with one line made to fit by 0 to 0.3 pt in 1-EMU steps of the box width, at 13.5 and 18 pt, to find the margin PowerPoint breaks at.",
+   "fix_idea": "Collect more decisions within 0.01 pt of the edge (a test deck: one line made to end 0 to 0.01 pt past the edge in 1-EMU steps of the box width, with and without kerning pairs) and look for the unit PowerPoint measures in. Low value: about 1 slide in 1000.",
    "confidence": "low",
    "findings": [],
    "representative": [],
@@ -1955,6 +1968,383 @@
     {
      "date": "2026-11-23",
      "note": "Opened from I-027, whose rule (drawing only) leaves these three breaks as they were."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "The 3963-slide deck: slide 3185, PowerPoint wraps a line whose exact width is 679.870 pt against a limit of 679.875 (fits by 0.005 pt); Euro-Office keeps it and 2 lines reflow. I-031 is the same boundary from the other side (lines over by 0.004 pt that Euro-Office keeps), so one rule may settle both (run i024-c review)."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "Rewritten after I-031: the K2 widths Euro-Office used were cut to 1/16384 mm, so the earlier measures (fits by 0.04 to 0.14 pt) were off. Computed exactly, every disputed line is within 0.005 pt of the edge. Tested on 99144 decisions: kerning rounded to 1/8 to 1/2048 pt, device pixels, 1/1000 em, a strict test, a floored, exact or rounded limit, and tolerances of 0 to 0.01 pt; none separates the band (best 63 wrong against 64). Severity lowered to trivial."
+    }
+   ]
+  },
+  {
+   "id": "I-029",
+   "title": "Colour emoji drawn as a monochrome outline glyph",
+   "severity": "major",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "font",
+    "text-color-effects"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). A knife emoji (U+1F52A) at the end of a 14-pt line is drawn by Euro-Office as the black outline glyph of Segoe UI Emoji. PowerPoint writes it as a 96x81 colour bitmap (brown handle, grey blade). The position and size match; the colour and shape do not. Slides (11): 734-736, 751-758.",
+   "powerpoint": "Colour emoji bitmap placed in the text line.",
+   "euro_office": "Monochrome Segoe UI Emoji outline glyph in the text colour.",
+   "suspected_cause": "The native text renderer and PDF writer draw only the outline (glyf) layer of a COLR/CPAL colour font; the colour layers are ignored.",
+   "code_area": "DesktopEditors/core/DesktopEditor/fontengine (glyph rendering) and core/PdfFile/PdfWriter.cpp (text output)",
+   "fix_idea": "For glyphs from a COLR font, draw each colour layer as a filled glyph in its CPAL colour, or rasterise the emoji to an image the way PowerPoint does.",
+   "confidence": "high",
+   "doubts": [
+    "Small (one glyph per slide), but the colour is wrong, so it is ranked major. The native renderer path for colour fonts was not traced."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-01; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-030",
+   "title": "Picture colour effects (clrChange, duotone, lum) ignored",
+   "severity": "major",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "picture"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Blip effects inside a:blip are parsed but not applied when drawing. 1484: clrChange makes white (and red ED1C24) transparent; Euro-Office keeps them, so the map's white background covers the top of the caption. 1046/1047: clrChange black-to-transparent plus a red duotone; Euro-Office shows black squares around the moons and the moon is not red. 2902 and 2906: a:lum contrast 20000 / 10000; PowerPoint's pictures have visibly higher contrast (measured 1.10-1.26x stretch on 2906). Slides (5): 1046-1047, 1484, 2902, 2906.",
+   "powerpoint": "Applies the colour change (transparent key colour), duotone recolouring and luminance/contrast to the picture before drawing it.",
+   "euro_office": "Draws the original picture unchanged (only alphaModFix transparency is honoured).",
+   "suspected_cause": "CBlipFill.Effects holds CClrChange / CDuotone / CLumEffect objects, but the drawing path only consumes CAlphaModFix (CBlipFill.getTransparent); no pixel transform is done for the others.",
+   "code_area": "sdkjs/common/Drawings/Format/Format.js (CBlipFill, CClrChange ~4623, CDuotone ~4697, CLumEffect ~5006); picture drawing in the shape drawer / native graphics",
+   "fix_idea": "Apply the blip effects to the decoded image before it is drawn or written to the PDF: clrChange as a colour-key alpha mask (with PowerPoint's tolerance), duotone as a luminance map between the two colours, lum as bright/contrast on each channel.",
+   "confidence": "high",
+   "doubts": [
+    "The exact colour-key tolerance PowerPoint uses for clrChange was not measured."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-02; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-031",
+   "title": "Lines that overflow by under 0.005 pt were not wrapped: item widths cut to 1/16384 mm left lines up to 0.01 pt short of their K2 width (a regression since the release)",
+   "severity": "major",
+   "status": "fixed",
+   "fixed_in": "sdkjs c845723170 (fix(slide): measure slide lines with rounded, not cut, item widths)",
+   "categories": [
+    "text-wrap"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). On slides 471 and 2822 a line with its next word is wider than the text area by K2's model (471: 693.50391 pt against 693.5; 2822: 687.50488 against 687.5), and PowerPoint wraps the word, so every later line of the box reflows (471: 2 lines differ, SSIM 0.975; 2822: 3 lines, 0.949). Release 9.3.8 wrapped both, with its own widths. The same cause kept two of I-028's lines (slide 93 of the 838-slide deck and 906 of the 1646-slide deck, over by 0.0012 pt).",
+   "powerpoint": "Wraps a word when the line with it is wider than the text area (box width minus insets, rounded down to whole 1/8 pt, K3) by K2's widths: advances rounded to 1/8 pt and kerning unrounded, computed exactly. On 99144 of PowerPoint's break decisions in the three decks (lines kept, and lines with the next word wrapped, in paragraphs of one Calibri face and size) this is wrong 64 times, and only 6 of those lie within 0.05 pt of the edge: 5 within 0.003 pt of it (I-028) and slide 1020 of the 3963-slide deck (a hyphenated word, 0.046 pt).",
+   "euro_office": "Before the fix: kept each run item's width cut down to a whole 1/16384 mm (TEXTWIDTH_DIVIDER), about 0.0001 pt lost a glyph, so a line of 100 glyphs came out up to 0.01 pt shorter than its K2 width and lines over the edge by less than that were kept. Now slide text keeps its widths rounded to the nearest unit, so lines are measured as K2 has them, to within 0.0005 pt. I-024's word starts, which corrected for the cut by half a unit a glyph, now take the layout position as it is, and its test for a word start exactly half a pixel from two pixels (1 word start in 24 is one) allows 0.01 px instead of 0.001, since the item widths put a position a few thousandths of a pixel off.",
+   "suspected_cause": "Cause found: the run items' widths were truncated to 1/16384 mm, which for slide text laid out to K2's whole 1/8 pt made lines slightly short of the edge test.",
+   "code_area": "sdkjs word/Editor/Paragraph/RunContent/Base.js: AscWord.ToTextWidth (rounds in slides), used by CRunText.SetWidth, SetTemporaryWidth and SetWidthVisible (Text.js) and CRunSpace.SetWidth (Space.js); word/Editor/Paragraph/draw/content-draw-state.js getSlideDeviceX (I-024's layout position and its half-pixel test).",
+   "fix_idea": "Done (see euro_office).",
+   "confidence": "high",
+   "doubts": [
+    "Three lines PowerPoint keeps are over the edge by 0.0024 to 0.0029 pt and now wrap: slide 806 of the 838-slide deck, 1564 of the 1646-slide deck (the same line) and 962 of the 3963-slide deck. Before the fix they were kept because their widths were cut. They are in I-028's band."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-03; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    },
+    {
+     "date": "2026-11-23",
+     "note": "Fixed in sdkjs c845723170 (merged into main as d0efdb7ed0). Measured with fitdata.py and fittest.py (scratch, kept in decks/great-roll-3963/review/i031): 99144 kept or wrapped lines from the three decks, with K2 widths under kerning rounded to 1/8, 1/16, ... 1/2048 pt, to device pixels, to 1/1000 em, not at all, and with the limit floored, exact or rounded, inclusive or strict, and with tolerances of 0 to 0.01 pt. Exact kerning with the floored limit is best (64 wrong, 6 within 0.05 pt of the edge); a tolerance of 0.003 to 0.004 pt gets 63 (it keeps 806, 1564 and 962 but wraps no longer at 93 and 906). Runs i031-b vs i024-c: 3963-slide deck 471 and 2822 better, 962 worse, mean SSIM of the other slides 0.996775 -> 0.996786; 1646-slide deck 906 better, 1564 worse, 0.99779 -> 0.99781, glyphs within 0.03 pt of PowerPoint's (slides 100 to 400) 83.5% -> 83.9%; 838-slide deck 93 better, 806 worse, 0.99782 -> 0.99785. Without the half-pixel change (run i031-a) glyphs within 0.03 pt fell to 83.2%."
+    }
+   ]
+  },
+  {
+   "id": "I-032",
+   "title": "scene3d camera rotation on pictures ignored (picture not mirrored)",
+   "severity": "major",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "picture"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Pictures with spPr scene3d camera orthographicFront and rot lon=10800000 (180 degrees about the vertical axis, 931 has 10799977) are shown mirrored left-right by PowerPoint. Euro-Office draws them unmirrored. 931 SSIM 0.747; 1046 0.929 (also N-02). Slides (2): 931, 1046.",
+   "powerpoint": "Picture mirrored horizontally.",
+   "euro_office": "Picture drawn as stored.",
+   "suspected_cause": "spPr scene3d/sp3d is not carried into the presentation shape model (only theme effect styles and SmartArt data hold scene3d), so the camera rotation is never applied.",
+   "code_area": "sdkjs/common/Shapes/Serialize.js (spPr reader: no scene3d); sdkjs/common/Drawings/Format/Format.js CSpPr; x2t PPTX-to-binary conversion",
+   "fix_idea": "Read scene3d camera rot; for orthographic cameras with lon near 180 degrees (and lat 0) apply a horizontal flip, and for lat near 180 a vertical flip; other angles could map to an affine foreshortening.",
+   "confidence": "high",
+   "doubts": [
+    "Only the 180-degree case occurs in this deck."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-04; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-033",
+   "title": "An opening quote followed by spaces cannot end a line",
+   "severity": "major",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-wrap"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). A paragraph has a left double quote (U+201C) directly before spaces. PowerPoint ends a line with it (the line ends \"slavery.“\"). Euro-Office treats U+201C as CANT_BE_AT_END and glues the following space to it, so the quote moves to the next line and all later lines reflow (PowerPoint 21 lines, Euro-Office 22; SSIM 0.755). Slides (1): 154.",
+   "powerpoint": "Quote stays at the end of the line; the spaces after it are the break opportunity.",
+   "euro_office": "Quote and following word move to the next line; the rest of the paragraph reflows.",
+   "suspected_cause": "g_aPunctuation[0x201C] has CANT_BE_AT_END, and Run.js keeps a para_Space after such an item instead of breaking there.",
+   "code_area": "sdkjs/common/commonDefines.js:2340 (g_aPunctuation); sdkjs/word/Editor/Run.js ~4148",
+   "fix_idea": "Allow a break at a space that follows a CANT_BE_AT_END quote (PowerPoint's rule applies only when the quote is directly attached to the next word), at least in presentations.",
+   "confidence": "high",
+   "doubts": [
+    "One occurrence; the rule for other opening punctuation followed by spaces was not tested."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-05; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-034",
+   "title": "Negative first-line indent not clamped at the text box edge",
+   "severity": "major",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-position"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Paragraphs have marL 18 pt and indent -26.64 pt, so the first line would start 8.64 pt left of the text inset. PowerPoint clamps it to the inset (x 19.2 pt); Euro-Office starts the first lines at x 10.56 pt, 8.64 pt too far left (SSIM 0.909). Slides (1): 2279.",
+   "powerpoint": "First line starts at the left inset.",
+   "euro_office": "First line starts 8.64 pt left of the inset.",
+   "suspected_cause": "Paragraph_Recalculate.js adds Ind.Left + Ind.FirstLine to the line start with no clamp at 0.",
+   "code_area": "sdkjs/word/Editor/Paragraph_Recalculate.js ~1740-1745",
+   "fix_idea": "In presentations, clamp Ind.Left + Ind.FirstLine to at least 0 for the first line.",
+   "confidence": "high",
+   "doubts": [
+    "Whether PowerPoint clamps at 0 or at another bound for larger negative values was not tested."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-06; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-035",
+   "title": "Glyphs still drift up to 1.6 pt along lines without spc or a dash, mostly Calibri 14 to 40 pt (I-024 incomplete)",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-glyph-spacing"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). An incomplete fix: I-024. On lines without spc or a dash, glyphs still drift from PowerPoint's positions by 0.45-1.57 pt (0.5-1.7 px at 800 px) partway along the line, either at a word start or inside a word. Mostly Calibri and Calibri Bold, 14-28 pt (242 pages have such lines at 39 pt or more, 247 in body sizes). Includes lines ending in \"?\" (1978, 2692, 2693: -0.52 pt), Courier New on 2110 (+/-0.5 pt) and a misplaced kern after r and a right quote on 1425 (+1.1 pt). Most drifts are negative (Euro-Office short). 466 slides (listed in the review's triage.json), for example 3716, 3588, 3520, 3505, 75, 2575.",
+   "powerpoint": "Word starts land on whole 600-dpi device pixels with per-run rounding.",
+   "euro_office": "The I-024 simulation reproduces only part of the lines; the remainder accumulates a different rounding.",
+   "suspected_cause": "I-024 device-placement simulation does not match PowerPoint's rounding for every run; the remaining error is per-run and depends on where the run starts.",
+   "code_area": "sdkjs/word/Editor/Paragraph/RunContent/Base.js; sdkjs TextShaper.js 498-517 and 710 (I-024/I-027 placement)",
+   "fix_idea": "Collect the worst lines (3716, 3588, 3520) and compare the simulated device positions with the PDF positions glyph by glyph to find which runs break the rule.",
+   "confidence": "medium",
+   "doubts": [
+    "The mechanism of the residual is not pinned down; it may be several small effects."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-07; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-036",
+   "title": "Text after a hyphen or dash drifts up to 1.7 pt, mostly short (I-027 incomplete)",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-glyph-spacing"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). An incomplete fix: I-027. On lines containing a hyphen or dash, the text after it drifts left of PowerPoint's position and the error grows along the line, up to 1.74 pt (3274, 16-pt Calibri). Measured 1.6-2.2 per mille short. 339 of 500 such lines are short, 161 long. 446 slides (listed in the review's triage.json), for example 3274, 1827, 3893, 3524, 2696, 1941.",
+   "powerpoint": "Runs after the dash are placed on the 1/3000-inch grid with extra cells.",
+   "euro_office": "Runs after a dash get no extra cells, so they are short.",
+   "suspected_cause": "The I-027 rule \"runs after a dash or mid-line space get no extra cells\" does not match PowerPoint for this deck.",
+   "code_area": "sdkjs TextShaper.js 498-517 and 710 (I-027 run grid)",
+   "fix_idea": "Give runs after a dash the same extra-cell treatment as other runs and re-measure 3274 and 1827.",
+   "confidence": "medium",
+   "doubts": [
+    "Some dash lines are long rather than short, so the rule may depend on run length or position."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-08; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-037",
+   "title": "Runs with character spacing (spc) drift up to 1.9 pt: I-024 leaves them at their layout widths",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-glyph-spacing"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). An incomplete fix: I-024. Lines with a:rPr spc drift from PowerPoint by up to 1.87 pt (2895, 27-pt Calibri; 3229 up to 1.77 pt). Most of these lines are long (365 of 515), the largest are short. 168 slides (listed in the review's triage.json), for example 2895, 3229, 3666, 1210, 2570, 531.",
+   "powerpoint": "Applies device placement to spaced runs as to other runs.",
+   "euro_office": "spc runs were excluded from the I-024 device-placement fix.",
+   "suspected_cause": "The I-024 fix skips runs with spc, so their positions use the unrounded layout.",
+   "code_area": "sdkjs/word/Editor/Paragraph/RunContent/Base.js and TextShaper.js (I-024 placement)",
+   "fix_idea": "Extend the device-placement rule to runs with spc, applying the spacing before rounding.",
+   "confidence": "medium",
+   "doubts": [
+    "How PowerPoint rounds spc itself was not measured separately."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-09; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-038",
+   "title": "Flat scene3d shapes rendered darker than PowerPoint",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "shape-fill-line"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Shapes with scene3d (camera orthographicFront, lightRig threePt) and no sp3d are drawn by PowerPoint with a fill about 8-14 levels lighter than the stored colour; Euro-Office uses the stored colour. Slides (44): 2289-2293, 2299-2305, 2307-2310, 2330, 2332, 2336, 2363, 2366-2368, 2372-2374, 2389, 2391-2392, 2408-2409, 2412-2417, 2432, 2446-2448, 2450-2452.",
+   "powerpoint": "Applies the three-point lighting to the flat face, which lightens it.",
+   "euro_office": "Plain fill colour.",
+   "suspected_cause": "scene3d is not read into the shape model (see N-04), so no lighting is applied.",
+   "code_area": "sdkjs/common/Shapes/Serialize.js (spPr reader); shape fill drawing",
+   "fix_idea": "When scene3d has a lightRig and the camera faces front with no bevel, lighten the face colour by PowerPoint's front-face factor for that rig (to be measured per rig).",
+   "confidence": "medium",
+   "doubts": [
+    "The lighting factor was measured only for threePt/t; it may depend on the colour."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-10; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-039",
+   "title": "Pictures PowerPoint keeps lossless are written as JPEG where that is smaller (K6 incomplete)",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "picture"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). An incomplete fix: K6 (core 88cf859ae7) chooses the encoding. Pictures that PowerPoint writes losslessly (FlateDecode) are written by Euro-Office as JPEG (DCTDecode) at quality 85. Line art and screenshot text in them are visibly softer, with ringing (1078, 2660, 1077). Slides (32): 435, 796-797, 1077-1079, 1136, 1159, 1161-1164, 1484, 1551, 1555, 1954, 2163, 2166, 2657-2660, 2795-2796, 2903, 2969-2971, 3000, 3636, 3818-3819.",
+   "powerpoint": "Lossless Flate image.",
+   "euro_office": "Follows K6's rule (core 88cf859ae7, LoadSlideImage): Flate when the picture has at most 256 colours or deflate is not larger than JPEG, otherwise JPEG at quality 75. On these slides JPEG is smaller (1078: 120412 bytes against PowerPoint's Flate 153894), so they are JPEG, and line art and text in the pictures are softer, with ringing (1078, 2660, 1077).",
+   "suspected_cause": "K6's encoding rule is incomplete. K6 already found two such exceptions in the 838-slide deck (image54 29 x 27 and image34 116 x 173, lossless though JPEG is smaller). Here all 32 are PNG sources, so PowerPoint may decide by the source format or by a size test other than deflate against JPEG at quality 75.",
+   "code_area": "core PdfFile/PdfWriter.cpp: LoadSlideImage (K6, core 88cf859ae7 on pptx-pdf-fidelity).",
+   "fix_idea": "Collect every picture of the three decks with its source format, colour count and both encodings' sizes, and find the rule that separates PowerPoint's Flate from its JPEG choices; then change LoadSlideImage.",
+   "confidence": "high",
+   "doubts": [
+    "The upstream core checkout in DesktopEditors/core writes JPEG at quality 85, but the run used K6's build (quality 75)."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-11; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-040",
+   "title": "Japanese text falls back to SimSun instead of the theme East Asian font",
+   "severity": "minor",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "font"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Six CJK characters at 18 pt in runs tagged lang ja are drawn in SimSun by Euro-Office; PowerPoint uses MS PGothic (the theme Jpan font). Positions match; the glyph design differs (Song vs Gothic). Slides (1): 3830.",
+   "powerpoint": "MS PGothic.",
+   "euro_office": "SimSun.",
+   "suspected_cause": "The theme font for the Jpan script (a:font script=\"Jpan\") is not used for the run; the fallback picks a Chinese font.",
+   "code_area": "sdkjs theme font resolution for East Asian runs (CTheme / font scheme script fonts)",
+   "fix_idea": "Resolve +mn-ea / +mj-ea by the run language (ja -> Jpan script font) before the generic fallback.",
+   "confidence": "medium",
+   "doubts": [
+    "The exact resolution path in sdkjs was not traced."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-12; decks/great-roll-3963/review/new-issues.json and triage.json)."
+    }
+   ]
+  },
+  {
+   "id": "I-041",
+   "title": "Centred, right-aligned and indented lines start 0.1-0.5 pt off",
+   "severity": "trivial",
+   "status": "open",
+   "fixed_in": null,
+   "categories": [
+    "text-position"
+   ],
+   "description": "Found by the 3963-slide deck's review (run i024-c, sdkjs f53e0a4a15). Line starts differ from PowerPoint by 0.3-0.5 pt on 61 pages (centred or right-aligned lines) and by about -0.12 pt on 72 pages (indented or bulleted lines). Sub-pixel at 800 px. 131 slides (listed in the review's triage.json), for example 3421, 3426, 314, 2965, 3527, 1510.",
+   "powerpoint": "Line start after alignment rounded to its device grid.",
+   "euro_office": "Line start computed from the unrounded width.",
+   "suspected_cause": "Alignment offset uses the layout width, not the device-placed width; indents rounded differently.",
+   "code_area": "sdkjs/word/Editor/Paragraph_Recalculate.js (line start / alignment)",
+   "fix_idea": "Compute the alignment offset from the device-placed line width.",
+   "confidence": "low",
+   "doubts": [
+    "Sub-pixel; the mechanism was not traced."
+   ],
+   "findings": [],
+   "representative": [],
+   "log": [
+    {
+     "date": "2026-11-23",
+     "note": "Opened from the 3963-slide deck's review (provisional id N-13; decks/great-roll-3963/review/new-issues.json and triage.json)."
     }
    ]
   }

@@ -103,9 +103,20 @@ Statuses: `open`, `in-progress`, `fixed`, `wontfix`, `not-a-bug`.
   little shorter than their layout, by font and size). Glyphs within 0.03 pt of PowerPoint's
   rose from 20% to 84%; mean SSIM 0.9978 on both decks (run i024-c: 237 slides closer on the
   1646-slide deck, 66 on the 838-slide deck, none worse by more than 0.006).
-- Open: I-028 (minor): three
-  borderline words wrap differently on the 1646-slide deck (slides 15, 906, 1308; slide 15
-  is its lowest, SSIM 0.938), and slide 93 of the 838-slide deck looks like the same case.
+- A third deck, 3963 slides in the same series and nearly all new, was reviewed slide by slide
+  after I-024 (run i024-c: mean SSIM 0.9968 against the release's 0.8145; 3798 of 3839 slides
+  break lines like PowerPoint). New open issues: major I-029 (colour emoji drawn as outlines),
+  I-030 (picture clrChange, duotone and lum ignored), I-031 (lines over by under 0.005 pt no
+  longer wrapped, a regression since the release), I-032 (scene3d camera rotation, so pictures
+  are not mirrored), I-033 (an opening quote before spaces cannot end a line), I-034 (negative
+  first-line indent not clamped); minor I-035 to I-040 (glyph drift left by I-024 and I-027,
+  spc runs, scene3d lighting, JPEG where PowerPoint keeps pictures lossless, a Japanese font);
+  trivial I-041.
+  I-031 (c845723170): slide text widths rounded, not cut, so lines are measured exactly as
+  K2 has them; 471 and 2822 and I-028's lines on 93 and 906 now break like PowerPoint. What is
+  left of I-028 is 6 slides within 0.005 pt of the edge, 3 each way (now trivial).
+- Open: I-028 (trivial): line breaks within 0.005 pt of the edge (slides 15, 1308, 1564 of the
+  1646-slide deck, 806 of the 838-slide deck, 962 and 3185 of the 3963-slide deck).
   Run-level text shadows are still not drawn (I-015; 11 slides of the new deck). Slide 674
   differs only in its extracted Hebrew text. PowerPoint's PDF downsamples pictures drawn
   above about 270 dpi to 200 dpi (I-025) and draws a flipped tiled picture unmirrored
